@@ -154,28 +154,76 @@ fn find_minimum_weeks(input: &PlannerInput) -> Option<u32> {
 }
 
 // ============================================================
-// Phase 2: Bonus levels
+// Phase 2: Bonus levels — exhaustive search (provably optimal)
+//
+// Search space: each skill can gain 0..K bonus levels beyond its
+// target, where K = max_level - target (at most 5). With 6 skills
+// this is at most 5^6 = 15,625 combinations. Each feasibility
+// check is O(n), so the total is ~100K ops — runs in microseconds.
 // ============================================================
 
 fn find_bonus_levels(input: &PlannerInput, min_weeks: u32) -> Vec<SkillLevel> {
     let n = input.combat_skills.len();
-    let mut max_possible: Vec<SkillLevel> = input.combat_skills.iter().map(|s| s.target_level).collect();
-    let mut improved = true;
-    while improved {
-        improved = false;
-        for i in 0..n {
-            if let Some(next_level) = max_possible[i].next() {
+    let targets: Vec<SkillLevel> = input.combat_skills.iter().map(|s| s.target_level).collect();
+    let max_levels: Vec<SkillLevel> = input.combat_skills.iter()
+        .map(|s| max_level(s.realm, s.skill_class))
+        .collect();
+    // How many bonus levels each skill can potentially gain
+    let bonus_range: Vec<usize> = (0..n).map(|i| {
+        max_levels[i].index().saturating_sub(targets[i].index())
+    }).collect();
+    let max_possible_total: usize = bonus_range.iter().sum();
+    if max_possible_total == 0 {
+        return targets;
+    }
+
+    let mut best_total: usize = 0;
+    let mut best = targets.clone();
+
+    // Recursive search with pruning
+    fn search(
+        skill: usize,
+        bonus: &mut Vec<usize>,
+        current_total: usize,
+        n: usize,
+        bonus_range: &[usize],
+        targets: &[SkillLevel],
+        input: &PlannerInput,
+        min_weeks: u32,
+        best_total: &mut usize,
+        best: &mut Vec<SkillLevel>,
+    ) {
+        if skill == n {
+            if current_total > *best_total {
                 let mut test = input.clone();
-                for j in 0..n { test.combat_skills[j].target_level = max_possible[j]; }
-                test.combat_skills[i].target_level = next_level;
+                for i in 0..n {
+                    test.combat_skills[i].target_level = SkillLevel::ALL[targets[i].index() + bonus[i]];
+                }
                 if check_feasibility(&test, min_weeks) {
-                    max_possible[i] = next_level;
-                    improved = true;
+                    *best_total = current_total;
+                    *best = (0..n).map(|i| SkillLevel::ALL[targets[i].index() + bonus[i]]).collect();
                 }
             }
+            return;
+        }
+
+        // Upper bound: current total + max from remaining skills
+        let max_remaining: usize = bonus_range[skill..].iter().sum();
+        if current_total + max_remaining <= *best_total {
+            return; // Prune: can't beat current best
+        }
+
+        // Try from highest bonus down (find good solutions early for better pruning)
+        for b in (0..=bonus_range[skill]).rev() {
+            bonus[skill] = b;
+            search(skill + 1, bonus, current_total + b, n, bonus_range, targets,
+                   input, min_weeks, best_total, best);
         }
     }
-    max_possible
+
+    let mut bonus = vec![0usize; n];
+    search(0, &mut bonus, 0, n, &bonus_range, &targets, input, min_weeks, &mut best_total, &mut best);
+    best
 }
 
 // ============================================================
