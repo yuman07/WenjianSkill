@@ -81,40 +81,22 @@ export default function App() {
         <section className="mb-6">
           <h2 className="text-sm font-medium text-gray-700 mb-3">材料与设置</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-4">
-            <div className="grid grid-cols-4 gap-4">
-              <div>
-                <label className="block text-xs text-purple-500 mb-1">紫色书页</label>
-                <input
-                  type="number" min={0} value={purplePages}
-                  onChange={(e) => setPurplePages(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-purple-400 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-blue-500 mb-1">蓝色书页</label>
-                <input
-                  type="number" min={0} value={bluePages}
-                  onChange={(e) => setBluePages(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-blue-400 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-amber-600 mb-1">转换石</label>
-                <input
-                  type="number" min={0} value={advanced.conversionStones}
-                  onChange={(e) => setAdvanced({ ...advanced, conversionStones: Math.max(0, parseInt(e.target.value) || 0) })}
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
-                />
-              </div>
+            {/* 转换 */}
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">每周转换次数</label>
-                <input
-                  type="number" min={3} max={10} value={advanced.freeConversionsPerWeek}
+                <input type="number" min={3} max={10} value={advanced.freeConversionsPerWeek}
                   onChange={(e) => setAdvanced({ ...advanced, freeConversionsPerWeek: Math.min(10, Math.max(3, parseInt(e.target.value) || 3)) })}
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
-                />
+                  className="w-full h-8 text-sm border border-gray-200 rounded px-2 focus:border-amber-500 outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">转换石个数</label>
+                <input type="number" min={0} value={advanced.conversionStones}
+                  onChange={(e) => setAdvanced({ ...advanced, conversionStones: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="w-full h-8 text-sm border border-gray-200 rounded px-2 focus:border-amber-500 outline-none" />
               </div>
             </div>
+
             {/* 狗粮池 */}
             <div>
               <label className="block text-xs text-gray-500 mb-2">狗粮池（非战斗神通的书页）</label>
@@ -156,22 +138,39 @@ export default function App() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">紫色书页每周收入</label>
-                <input
-                  type="number" min={0} value={advanced.weeklyPurpleIncome}
-                  onChange={(e) => setAdvanced({ ...advanced, weeklyPurpleIncome: Math.max(0, parseInt(e.target.value) || 0) })}
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-purple-400 outline-none"
-                />
+            {/* 紫色书页 */}
+            <div className="grid grid-cols-[4rem_1fr_1fr] gap-2 items-center">
+              <span className="text-xs text-purple-500">紫色书页</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400 shrink-0">当前</span>
+                <input type="number" min={0} value={purplePages}
+                  onChange={(e) => setPurplePages(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-purple-400 outline-none" />
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">蓝色书页每周收入</label>
-                <input
-                  type="number" min={0} value={advanced.weeklyBlueIncome}
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400 shrink-0">每周</span>
+                <input type="number" min={0} value={advanced.weeklyPurpleIncome}
+                  onChange={(e) => setAdvanced({ ...advanced, weeklyPurpleIncome: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-purple-400 outline-none" />
+                <span className="text-xs text-gray-400 shrink-0">张</span>
+              </div>
+            </div>
+
+            {/* 蓝色书页 */}
+            <div className="grid grid-cols-[4rem_1fr_1fr] gap-2 items-center">
+              <span className="text-xs text-blue-500">蓝色书页</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400 shrink-0">当前</span>
+                <input type="number" min={0} value={bluePages}
+                  onChange={(e) => setBluePages(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-blue-400 outline-none" />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400 shrink-0">每周</span>
+                <input type="number" min={0} value={advanced.weeklyBlueIncome}
                   onChange={(e) => setAdvanced({ ...advanced, weeklyBlueIncome: Math.max(0, parseInt(e.target.value) || 0) })}
-                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-blue-400 outline-none"
-                />
+                  className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-blue-400 outline-none" />
+                <span className="text-xs text-gray-400 shrink-0">张</span>
               </div>
             </div>
           </div>
