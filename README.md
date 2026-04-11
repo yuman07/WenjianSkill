@@ -71,7 +71,7 @@
    ```bash
    xcode-select --install
    ```
-2. 安装 [Devbox](https://www.jetify.com/docs/devbox/installing_devbox/)：
+2. 安装 [Devbox](https://www.jetify.com/docs/devbox/quickstart/)：
    ```bash
    curl -fsSL https://get.jetify.com/devbox | bash
    ```
@@ -79,7 +79,7 @@
 #### Windows
 
 1. 安装 [Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)，勾选「使用 C++ 的桌面开发」工作负载
-2. 安装 [Devbox](https://www.jetify.com/docs/devbox/installing_devbox/)
+2. 安装 [Devbox](https://www.jetify.com/docs/devbox/quickstart/)
 
 ### 构建与运行
 
