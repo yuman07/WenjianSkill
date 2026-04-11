@@ -1,4 +1,4 @@
-import { REALMS, classesForRealm, shopsForClass, defaultIncomeForShop, availableLevels } from "../types/game";
+import { REALMS, SKILL_LEVELS, classesForRealm, shopsForClass, defaultIncomeForShop, availableLevels } from "../types/game";
 import type { Realm, SkillClass, SkillLevel } from "../types/game";
 import type { CombatSkillInput } from "../types/planner";
 
@@ -6,17 +6,30 @@ interface Props {
   index: number;
   skill: CombatSkillInput;
   onChange: (skill: CombatSkillInput) => void;
+  duplicate?: boolean;
 }
 
-export default function SkillCard({ index, skill, onChange }: Props) {
+export default function SkillCard({ index, skill, onChange, duplicate }: Props) {
   const availableClasses = classesForRealm(skill.realm);
   const availableShops = shopsForClass(skill.skillClass);
   const levels = availableLevels(skill.realm, skill.skillClass);
+  const currentIdx = SKILL_LEVELS.indexOf(skill.currentLevel);
+  const targetLevels = levels.filter((l) => SKILL_LEVELS.indexOf(l) >= currentIdx);
 
   /** Clamp a level to the available levels for a given realm+class */
   const clampLevel = (level: SkillLevel, realm: Realm, cls: SkillClass): SkillLevel => {
     const lvls = availableLevels(realm, cls);
     return lvls.includes(level) ? level : lvls[lvls.length - 1];
+  };
+
+  /** Ensure targetLevel >= currentLevel after clamping */
+  const ensureTargetGeCurrent = (cur: SkillLevel, tgt: SkillLevel, realm: Realm, cls: SkillClass): SkillLevel => {
+    const ci = SKILL_LEVELS.indexOf(cur);
+    const ti = SKILL_LEVELS.indexOf(tgt);
+    if (ti >= ci) return tgt;
+    // Target fell below current after clamp — push it up
+    const lvls = availableLevels(realm, cls);
+    return lvls.find((l) => SKILL_LEVELS.indexOf(l) >= ci) ?? cur;
   };
 
   const handleRealmChange = (realm: typeof skill.realm) => {
@@ -26,7 +39,7 @@ export default function SkillCard({ index, skill, onChange }: Props) {
     const shop = shops.includes(skill.shop) ? skill.shop : shops[0];
     const income = defaultIncomeForShop(shop);
     const currentLevel = clampLevel(skill.currentLevel, realm, cls);
-    const targetLevel = clampLevel(skill.targetLevel, realm, cls);
+    const targetLevel = ensureTargetGeCurrent(currentLevel, clampLevel(skill.targetLevel, realm, cls), realm, cls);
     onChange({ ...skill, realm, skillClass: cls, shop, currentLevel, targetLevel, incomeCycleWeeks: income.cycleWeeks, incomeBatchCount: income.batchCount });
   };
 
@@ -35,7 +48,7 @@ export default function SkillCard({ index, skill, onChange }: Props) {
     const shop = shops.includes(skill.shop) ? skill.shop : shops[0];
     const income = defaultIncomeForShop(shop);
     const currentLevel = clampLevel(skill.currentLevel, skill.realm, cls);
-    const targetLevel = clampLevel(skill.targetLevel, skill.realm, cls);
+    const targetLevel = ensureTargetGeCurrent(currentLevel, clampLevel(skill.targetLevel, skill.realm, cls), skill.realm, cls);
     onChange({ ...skill, skillClass: cls, shop, currentLevel, targetLevel, incomeCycleWeeks: income.cycleWeeks, incomeBatchCount: income.batchCount });
   };
 
@@ -48,8 +61,11 @@ export default function SkillCard({ index, skill, onChange }: Props) {
   const disabledCls = "w-full h-8 text-sm border border-gray-200 rounded px-2 bg-gray-100 text-gray-500 outline-none";
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-      <div className="text-sm font-bold text-amber-600 mb-3">神通 #{index + 1}</div>
+    <div className={`border rounded-lg p-4 bg-white shadow-sm ${duplicate ? "border-red-400" : "border-gray-200"}`}>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-sm font-bold text-amber-600">神通 #{index + 1}</span>
+        {duplicate && <span className="text-xs text-red-500">重复神通</span>}
+      </div>
       <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         <div>
           <label className="block text-xs text-gray-500 mb-1">境界</label>
@@ -72,7 +88,13 @@ export default function SkillCard({ index, skill, onChange }: Props) {
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">当前等级</label>
-          <select value={skill.currentLevel} onChange={(e) => onChange({ ...skill, currentLevel: e.target.value as typeof skill.currentLevel })} className={inputCls}>
+          <select value={skill.currentLevel} onChange={(e) => {
+            const cur = e.target.value as SkillLevel;
+            const ci = SKILL_LEVELS.indexOf(cur);
+            const ti = SKILL_LEVELS.indexOf(skill.targetLevel);
+            const targetLevel = ti >= ci ? skill.targetLevel : cur;
+            onChange({ ...skill, currentLevel: cur, targetLevel });
+          }} className={inputCls}>
             {levels.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
@@ -85,7 +107,7 @@ export default function SkillCard({ index, skill, onChange }: Props) {
         <div>
           <label className="block text-xs text-gray-500 mb-1">目标等级</label>
           <select value={skill.targetLevel} onChange={(e) => onChange({ ...skill, targetLevel: e.target.value as typeof skill.targetLevel })} className={inputCls}>
-            {levels.map((l) => <option key={l} value={l}>{l}</option>)}
+            {targetLevels.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
       </div>

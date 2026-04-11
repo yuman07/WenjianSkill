@@ -61,7 +61,25 @@ export default function App() {
     setSkills(next);
   };
 
+  // Detect duplicate skills (same realm+class+shop)
+  const duplicateSet = new Set<number>();
+  const seen = new Map<string, number>();
+  skills.forEach((s, i) => {
+    const key = `${s.realm}|${s.skillClass}|${s.shop}`;
+    if (seen.has(key)) {
+      duplicateSet.add(seen.get(key)!);
+      duplicateSet.add(i);
+    } else {
+      seen.set(key, i);
+    }
+  });
+
   const handleGenerate = async () => {
+    if (duplicateSet.size > 0) {
+      setError("存在重复的神通（相同境界+职业+商店），请修改后重试");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setOutput(null);
@@ -104,7 +122,7 @@ export default function App() {
           <h2 className="text-sm font-medium text-gray-700 mb-3">战斗神通</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {skills.map((skill, i) => (
-              <SkillCard key={i} index={i} skill={skill} onChange={(s) => updateSkill(i, s)} />
+              <SkillCard key={i} index={i} skill={skill} onChange={(s) => updateSkill(i, s)} duplicate={duplicateSet.has(i)} />
             ))}
           </div>
         </section>
