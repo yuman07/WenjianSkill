@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 import type { PlannerOutput, WeekPlan, CombatSkillInput } from "../types/planner";
 import { skillDisplayName } from "../types/planner";
+import { generatePlanText } from "../utils/exportText";
 
 interface Props {
   output: PlannerOutput;
@@ -155,8 +158,29 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
 export default function PlanOutput({ output, skills }: Props) {
   const totalWeeks = output.weeks.length > 0 ? output.weeks[output.weeks.length - 1].week : 0;
 
+  const handleExport = async () => {
+    const text = generatePlanText(output, skills);
+    const path = await save({
+      defaultPath: "神通规划方案.txt",
+      filters: [{ name: "文本文件", extensions: ["txt"] }],
+    });
+    if (path) {
+      await writeTextFile(path, text);
+    }
+  };
+
   return (
     <div className="space-y-3">
+      {/* 导出按钮 */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleExport}
+          className="text-sm px-4 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 cursor-pointer"
+        >
+          导出 TXT
+        </button>
+      </div>
+
       {/* 不可达提示 */}
       {!output.feasible && output.unreachableReasons.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
