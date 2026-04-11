@@ -2,11 +2,13 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import SkillCard from "./components/SkillCard";
 import PlanOutput from "./components/PlanOutput";
+import { SHOPS } from "./types/game";
 import type {
   CombatSkillInput,
   PlannerInput,
   PlannerOutput,
   AdvancedSettings,
+  FodderIncome,
 } from "./types/planner";
 import { defaultCombatSkill, defaultAdvancedSettings, skillDisplayName } from "./types/planner";
 
@@ -113,6 +115,36 @@ export default function App() {
                 />
               </div>
             </div>
+            {/* 狗粮池收入 */}
+            <div>
+              <label className="block text-xs text-gray-500 mb-2">狗粮池收入（非战斗神通的书页积累速度）</label>
+              <div className="space-y-1.5">
+                {SHOPS.map((shop) => {
+                  const fi = advanced.fodderIncome[shop];
+                  const updateFI = (patch: Partial<FodderIncome>) => {
+                    setAdvanced({
+                      ...advanced,
+                      fodderIncome: { ...advanced.fodderIncome, [shop]: { ...fi, ...patch } },
+                    });
+                  };
+                  return (
+                    <div key={shop} className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <span className="w-8">{shop}</span>
+                      <span>每</span>
+                      <input type="number" min={1} value={fi.cycleWeeks}
+                        onChange={(e) => updateFI({ cycleWeeks: Math.max(1, parseInt(e.target.value) || 1) })}
+                        className="w-10 text-center text-sm border border-gray-200 rounded px-1 py-0.5 focus:border-amber-500 outline-none" />
+                      <span>周获取</span>
+                      <input type="number" min={0} value={fi.batchCount}
+                        onChange={(e) => updateFI({ batchCount: Math.max(0, parseInt(e.target.value) || 0) })}
+                        className="w-10 text-center text-sm border border-gray-200 rounded px-1 py-0.5 focus:border-amber-500 outline-none" />
+                      <span>本</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">紫色书页每周收入</label>

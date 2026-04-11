@@ -29,10 +29,17 @@ export interface PlannerBackendSkill {
   incomeBatchCount: number;
 }
 
+/** 单商店狗粮收入 */
+export interface FodderIncome {
+  cycleWeeks: number;
+  batchCount: number;
+}
+
 /** 设置 */
 export interface AdvancedSettings {
   conversionStones: number;
   freeConversionsPerWeek: number;
+  fodderIncome: Record<Shop, FodderIncome>; // 每商店狗粮收入周期
   weeklyPurpleIncome: number;
   weeklyBlueIncome: number;
 }
@@ -47,9 +54,11 @@ export interface PlannerInput {
 
 /** 默认设置 */
 export function defaultAdvancedSettings(): AdvancedSettings {
+  const f = (): FodderIncome => ({ cycleWeeks: 2, batchCount: 1 });
   return {
     conversionStones: 0,
     freeConversionsPerWeek: 3,
+    fodderIncome: { 论剑: f(), 诸天: f(), 宗门: f(), 道蕴: f(), 百族: f() },
     weeklyPurpleIncome: 0,
     weeklyBlueIncome: 0,
   };

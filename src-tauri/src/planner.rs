@@ -67,22 +67,28 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
         return false;
     }
 
-    // Per-shop: total pages must cover total self needed (with conversions to redistribute)
+    // Per-shop: skill pages + fodder pool must cover total self needed
+    // Fodder pool pages can be converted to same-shop skill 本体 OR used as 仙品
+    let mut fodder_pool = vec![0u32; 5]; // per-shop fodder pool over W weeks
+    for &shop in &Shop::ALL {
+        fodder_pool[shop.index()] = adv.fodder_income.pages_over_weeks(shop, weeks);
+    }
+
     for &shop in &Shop::ALL {
         let shop_pages: u32 = (0..n)
             .filter(|&i| input.combat_skills[i].shop == shop)
-            .map(|i| total_pages[i])
-            .sum();
+            .map(|i| total_pages[i]).sum();
         let shop_self: u32 = (0..n)
             .filter(|&i| input.combat_skills[i].shop == shop)
-            .map(|i| self_needed[i])
-            .sum();
-        if shop_pages < shop_self {
+            .map(|i| self_needed[i]).sum();
+        // Skill pages + fodder pool can cover 本体 via conversion
+        if shop_pages + fodder_pool[shop.index()] < shop_self {
             return false;
         }
     }
 
-    // Conversion capacity: count per-skill deficits that need same-shop redistribution
+    // Conversion capacity: deficits not covered by own skill pages need conversion
+    // (from same-shop surplus skills or fodder pool)
     let total_conversions_needed: u32 = (0..n)
         .filter(|&i| total_pages[i] < self_needed[i])
         .map(|i| {
@@ -95,8 +101,7 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
         return false;
     }
 
-    // 仙品 check: surplus from each skill (after own 本体 needs + shop redistribution)
-    // Per shop, surplus = shop_pages - shop_self_needed
+    // 仙品 check: surplus from combat skills + remaining fodder pools
     let total_surplus: u32 = Shop::ALL.iter().map(|&shop| {
         let shop_pages: u32 = (0..n)
             .filter(|&i| input.combat_skills[i].shop == shop)
@@ -104,7 +109,8 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
         let shop_self: u32 = (0..n)
             .filter(|&i| input.combat_skills[i].shop == shop)
             .map(|i| self_needed[i]).sum();
-        shop_pages.saturating_sub(shop_self)
+        // Total available = skill pages + fodder pool - self needed
+        (shop_pages + fodder_pool[shop.index()]).saturating_sub(shop_self)
     }).sum();
 
     if total_surplus < total_other {
@@ -168,6 +174,7 @@ struct SimState {
     pages: Vec<u32>,
     shops: Vec<Shop>,
     targets: Vec<SkillLevel>,
+    fodder_pools: [u32; 5], // per-shop fodder pool
     purple: u32,
     blue: u32,
     stones: u32,
@@ -181,6 +188,7 @@ impl SimState {
             pages: input.combat_skills.iter().map(|s| s.remaining_pages).collect(),
             shops: input.combat_skills.iter().map(|s| s.shop).collect(),
             targets: targets.to_vec(),
+            fodder_pools: [0; 5],
             purple: input.purple_pages,
             blue: input.blue_pages,
             stones: input.advanced.conversion_stones,
@@ -227,16 +235,32 @@ impl SimState {
         if self.pages[i] < cost.self_pages { return None; }
         if self.purple < cost.purple_pages || self.blue < cost.blue_pages { return None; }
 
-        // Check 仙品: can we get enough from other skills' donatable pages?
+        // Check 仙品: other skills' surplus + fodder pools
         let total_donatable: u32 = (0..n).filter(|&j| j != i).map(|j| self.donatable(j)).sum();
-        if total_donatable < cost.other_pages { return None; }
+        let total_fodder: u32 = self.fodder_pools.iter().sum();
+        if total_donatable + total_fodder < cost.other_pages { return None; }
 
         // Execute
         self.pages[i] -= cost.self_pages;
 
-        // Consume 仙品 from donors (low rarity first)
+        // Consume 仙品: fodder pools first (low rarity), then other skills' surplus
         let mut consumed: HashMap<String, u32> = HashMap::new();
         let mut remaining = cost.other_pages;
+        let mut shop_order: Vec<Shop> = Shop::ALL.to_vec();
+        shop_order.sort_by_key(|s| s.rarity());
+
+        // From fodder pools first
+        for &shop in &shop_order {
+            if remaining == 0 { break; }
+            let pool = &mut self.fodder_pools[shop.index()];
+            let take = (*pool).min(remaining);
+            if take > 0 {
+                *pool -= take;
+                consumed.insert(format!("pool_{}", shop.index()), take);
+                remaining -= take;
+            }
+        }
+        // Then from other combat skills' surplus
         let mut donors: Vec<usize> = (0..n).filter(|&j| j != i).collect();
         donors.sort_by_key(|&j| self.shops[j].rarity());
         for &j in &donors {
@@ -271,7 +295,7 @@ fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekP
     let mut conversions = Vec::new();
     let mut upgrades = Vec::new();
 
-    // Step 1: Income
+    // Step 1: Income (combat skills + fodder pools + purple/blue)
     state.purple += input.advanced.weekly_purple_income;
     state.blue += input.advanced.weekly_blue_income;
     for i in 0..n {
@@ -279,6 +303,12 @@ fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekP
         if pages > 0 {
             state.pages[i] += pages;
             incomes.push(SkillIncome { skill_index: i, pages });
+        }
+    }
+    for &shop in &Shop::ALL {
+        let pages = input.advanced.fodder_income.pages_in_week(shop, week);
+        if pages > 0 {
+            state.fodder_pools[shop.index()] += pages;
         }
     }
 
@@ -312,7 +342,33 @@ fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekP
         let mut converted = false;
         for &i in &candidates {
             let shop = state.shops[i];
-            // Find a same-shop donor with surplus
+
+            // Source 1: same-shop fodder pool
+            if state.fodder_pools[shop.index()] >= PAGES_PER_UNIT {
+                if free_left > 0 {
+                    free_left -= 1;
+                    state.fodder_pools[shop.index()] -= PAGES_PER_UNIT;
+                    state.pages[i] += PAGES_PER_UNIT;
+                    conversions.push(ConversionAction {
+                        shop, target_skill_index: i, from_skill_index: usize::MAX, // pool
+                        used_stone: false, pages: PAGES_PER_UNIT,
+                    });
+                    converted = true;
+                    break;
+                } else if state.stones > 0 {
+                    state.stones -= 1;
+                    state.fodder_pools[shop.index()] -= PAGES_PER_UNIT;
+                    state.pages[i] += PAGES_PER_UNIT;
+                    conversions.push(ConversionAction {
+                        shop, target_skill_index: i, from_skill_index: usize::MAX,
+                        used_stone: true, pages: PAGES_PER_UNIT,
+                    });
+                    converted = true;
+                    break;
+                }
+            }
+
+            // Source 2: same-shop combat skill surplus
             let mut donors: Vec<usize> = (0..n)
                 .filter(|&j| j != i && state.shops[j] == shop && state.donatable(j) >= PAGES_PER_UNIT)
                 .collect();

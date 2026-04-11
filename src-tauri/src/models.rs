@@ -193,11 +193,59 @@ pub struct CombatSkillInput {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FodderIncomeEntry {
+    #[serde(rename = "cycleWeeks")]
+    pub cycle_weeks: u32,
+    #[serde(rename = "batchCount")]
+    pub batch_count: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FodderIncomeMap {
+    #[serde(rename = "论剑")]
+    pub lun_jian: FodderIncomeEntry,
+    #[serde(rename = "诸天")]
+    pub zhu_tian: FodderIncomeEntry,
+    #[serde(rename = "宗门")]
+    pub zong_men: FodderIncomeEntry,
+    #[serde(rename = "道蕴")]
+    pub dao_yun: FodderIncomeEntry,
+    #[serde(rename = "百族")]
+    pub bai_zu: FodderIncomeEntry,
+}
+
+impl FodderIncomeMap {
+    pub fn get(&self, shop: Shop) -> &FodderIncomeEntry {
+        match shop {
+            Shop::LunJian => &self.lun_jian,
+            Shop::ZhuTian => &self.zhu_tian,
+            Shop::ZongMen => &self.zong_men,
+            Shop::DaoYun => &self.dao_yun,
+            Shop::BaiZu => &self.bai_zu,
+        }
+    }
+
+    pub fn pages_over_weeks(&self, shop: Shop, weeks: u32) -> u32 {
+        let e = self.get(shop);
+        if weeks == 0 || e.cycle_weeks == 0 { return 0; }
+        (weeks / e.cycle_weeks) * e.batch_count * 40
+    }
+
+    pub fn pages_in_week(&self, shop: Shop, week: u32) -> u32 {
+        let e = self.get(shop);
+        if e.cycle_weeks == 0 || week == 0 { return 0; }
+        if week % e.cycle_weeks == 0 { e.batch_count * 40 } else { 0 }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedSettings {
     #[serde(rename = "conversionStones")]
     pub conversion_stones: u32,
     #[serde(rename = "freeConversionsPerWeek")]
     pub free_conversions_per_week: u32,
+    #[serde(rename = "fodderIncome")]
+    pub fodder_income: FodderIncomeMap,
     #[serde(rename = "weeklyPurpleIncome")]
     pub weekly_purple_income: u32,
     #[serde(rename = "weeklyBlueIncome")]

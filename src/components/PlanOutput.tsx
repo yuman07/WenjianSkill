@@ -68,7 +68,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                 </div>
                 {week.conversions.map((c, i) => (
                   <div key={i} className="text-sm text-gray-700 ml-3 leading-relaxed">
-                    从 <span className="font-medium">{name(skills, c.fromSkillIndex)}</span> 取 {c.pages} 张，转给{" "}
+                    从 <span className="font-medium">{c.fromSkillIndex < skills.length ? name(skills, c.fromSkillIndex) : `「${c.shop}」狗粮池`}</span> 取 {c.pages} 张，转给{" "}
                     <span className="font-medium">{name(skills, c.targetSkillIndex)}</span>
                     {c.usedStone && <span className="ml-1 text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">消耗转换石</span>}
                   </div>
@@ -96,7 +96,10 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                       <div className="text-xs text-gray-400 mt-0.5">
                         消耗：本体 {u.selfPagesUsed} 张
                         {donors.length > 0 && (
-                          <>，狗粮 {donors.map(([idx, v]) => `${name(skills, parseInt(idx))}${v}张`).join("、")}</>
+                          <>，狗粮 {donors.map(([key, v]) => {
+                            const label = key.startsWith("pool_") ? "狗粮池" : name(skills, parseInt(key));
+                            return `${label}${v}张`;
+                          }).join("、")}</>
                         )}
                         {u.purplePagesUsed > 0 && <>，紫色 {u.purplePagesUsed}</>}
                         {u.bluePagesUsed > 0 && <>，蓝色 {u.bluePagesUsed}</>}
