@@ -34,10 +34,8 @@ jobs:
           node-version: 24
       - uses: dtolnay/rust-toolchain@stable
       - run: npm install
-      - name: Build frontend
-        run: npm run build
-      - name: Build Rust (release)
-        run: cargo build --release --manifest-path src-tauri/Cargo.toml
+      - name: Build portable exe
+        run: npx tauri build --no-bundle
       - uses: actions/upload-artifact@v7
         with:
           name: WenjianSkill-Windows
