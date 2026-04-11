@@ -15,6 +15,7 @@ struct PlannerState {
     blue_pages: u32,
     conversion_stones: u32,
     weekly_shop_income: ShopMap,
+    baizu_cycle_weeks: u32,  // 百族每 N 周获取 1 本
     weekly_purple_income: u32,
     weekly_blue_income: u32,
 }
@@ -31,6 +32,7 @@ impl PlannerState {
             blue_pages: input.blue_pages,
             conversion_stones: input.advanced.conversion_stones,
             weekly_shop_income: input.advanced.weekly_shop_income.clone(),
+            baizu_cycle_weeks: input.advanced.baizu_cycle_weeks,
             weekly_purple_income: input.advanced.weekly_purple_income,
             weekly_blue_income: input.advanced.weekly_blue_income,
         }
@@ -173,6 +175,7 @@ pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
         if !has_actions && !state.all_targets_met() {
             // 检查是否有每周收入能最终解决问题
             let has_income = Shop::ALL.iter().any(|s| state.weekly_shop_income.get(*s) > 0)
+                || state.baizu_cycle_weeks > 0
                 || state.weekly_purple_income > 0
                 || state.weekly_blue_income > 0;
             if !has_income {
@@ -289,7 +292,17 @@ fn plan_one_week(state: &mut PlannerState, week: u32, phase1: bool) -> WeekPlan 
     state.blue_pages += state.weekly_blue_income;
 
     for &shop in &Shop::ALL {
-        let income_count = state.weekly_shop_income.get(shop);
+        // 百族使用周期制：每 N 周获取 1 本
+        let income_count = if shop == Shop::BaiZu {
+            if state.baizu_cycle_weeks > 0 && week % state.baizu_cycle_weeks == 0 {
+                1
+            } else {
+                0
+            }
+        } else {
+            state.weekly_shop_income.get(shop)
+        };
+
         if income_count == 0 {
             continue;
         }
@@ -308,7 +321,7 @@ fn plan_one_week(state: &mut PlannerState, week: u32, phase1: bool) -> WeekPlan 
                 });
             }
             None => {
-                // 没有该商店的战斗神通需要本体，进入非战斗池
+                // 没有该商店的战斗神通需要本体，进入狗粮池
                 state.non_combat_pools.add(shop, pages);
                 acquisitions.push(ShopAcquisition {
                     shop,

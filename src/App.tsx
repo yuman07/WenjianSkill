@@ -124,7 +124,7 @@ export default function App() {
 
             {/* 狗粮池 */}
             <div>
-              <label className="block text-xs text-gray-500 mb-2">狗粮池（不用的神通书页，按商店汇总，没有额外囤积可全填 0）</label>
+              <label className="block text-xs text-gray-500 mb-2">狗粮池（不用的神通书页，按商店汇总）</label>
               <div className="grid grid-cols-5 gap-2">
                 {SHOPS.map((shop) => (
                   <div key={shop}>
@@ -142,9 +142,9 @@ export default function App() {
 
             {/* 每周收入 */}
             <div>
-              <label className="block text-xs text-gray-500 mb-2">每周商店获取次数（每次获取 40 张书页）</label>
-              <div className="grid grid-cols-5 gap-2">
-                {SHOPS.map((shop) => (
+              <label className="block text-xs text-gray-500 mb-2">每周商店兑换次数（每次兑换 40 张书页）</label>
+              <div className="grid grid-cols-4 gap-2">
+                {SHOPS.filter((s) => s !== "百族").map((shop) => (
                   <div key={shop}>
                     <label className="block text-xs text-gray-400 mb-1">{shop}</label>
                     <input
@@ -156,6 +156,18 @@ export default function App() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* 百族周期 */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">百族商店：每</span>
+              <input
+                type="number" min={0}
+                value={advanced.baizuCycleWeeks}
+                onChange={(e) => setAdvanced({ ...advanced, baizuCycleWeeks: Math.max(0, parseInt(e.target.value) || 0) })}
+                className="w-16 text-sm text-center border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
+              />
+              <span className="text-xs text-gray-500">周兑换 1 本（填 0 表示不兑换）</span>
             </div>
 
             {/* 每周紫色/蓝色收入 */}
