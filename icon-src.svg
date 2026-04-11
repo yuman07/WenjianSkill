@@ -58,7 +58,7 @@
   </g>
 
   <!-- === Chinese Sword (中式直剑) - moved down === -->
-  <g transform="translate(270,230) rotate(32)">
+  <g transform="translate(270,250) rotate(32)">
     <polygon points="-5,-145 5,-145 6,-20 -6,-20" fill="url(#blade)"/>
     <polygon points="-5,-145 0,-160 5,-145" fill="#dde4f0"/>
     <line x1="0" y1="-158" x2="0" y2="-20" stroke="#f8faff" stroke-width="1.2" opacity="0.5"/>

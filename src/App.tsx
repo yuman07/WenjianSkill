@@ -141,39 +141,39 @@ export default function App() {
 
             {/* 紫色书页 */}
             <div className="grid grid-cols-[4rem_1fr_1fr] gap-2 items-center">
-              <span className="text-xs text-purple-500">紫色书页</span>
+              <span className="text-xs font-medium" style={{ color: "#8b5cf6" }}>紫色书页</span>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 shrink-0">现有</span>
+                <span className="text-xs shrink-0" style={{ color: "#a78bfa" }}>现有</span>
                 <input type="number" min={0} value={purplePages}
                   onChange={(e) => setPurplePages(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-purple-400 outline-none" />
-                <span className="text-xs text-gray-400 shrink-0">张</span>
+                  className="w-full h-8 text-sm text-center border border-gray-200 rounded outline-none" style={{ borderColor: undefined }} onFocus={(e) => e.target.style.borderColor="#8b5cf6"} onBlur={(e) => e.target.style.borderColor=""} />
+                <span className="text-xs shrink-0" style={{ color: "#a78bfa" }}>张</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 shrink-0">每周获取</span>
+                <span className="text-xs shrink-0" style={{ color: "#a78bfa" }}>每周获取</span>
                 <input type="number" min={0} value={advanced.weeklyPurpleIncome}
                   onChange={(e) => setAdvanced({ ...advanced, weeklyPurpleIncome: Math.max(0, parseInt(e.target.value) || 0) })}
-                  className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-purple-400 outline-none" />
-                <span className="text-xs text-gray-400 shrink-0">张</span>
+                  className="w-full h-8 text-sm text-center border border-gray-200 rounded outline-none" onFocus={(e) => e.target.style.borderColor="#8b5cf6"} onBlur={(e) => e.target.style.borderColor=""} />
+                <span className="text-xs shrink-0" style={{ color: "#a78bfa" }}>张</span>
               </div>
             </div>
 
             {/* 蓝色书页 */}
             <div className="grid grid-cols-[4rem_1fr_1fr] gap-2 items-center">
-              <span className="text-xs text-blue-500">蓝色书页</span>
+              <span className="text-xs font-medium" style={{ color: "#3b82f6" }}>蓝色书页</span>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 shrink-0">现有</span>
+                <span className="text-xs shrink-0" style={{ color: "#60a5fa" }}>现有</span>
                 <input type="number" min={0} value={bluePages}
                   onChange={(e) => setBluePages(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-blue-400 outline-none" />
-                <span className="text-xs text-gray-400 shrink-0">张</span>
+                  className="w-full h-8 text-sm text-center border border-gray-200 rounded outline-none" onFocus={(e) => e.target.style.borderColor="#3b82f6"} onBlur={(e) => e.target.style.borderColor=""} />
+                <span className="text-xs shrink-0" style={{ color: "#60a5fa" }}>张</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 shrink-0">每周获取</span>
+                <span className="text-xs shrink-0" style={{ color: "#60a5fa" }}>每周获取</span>
                 <input type="number" min={0} value={advanced.weeklyBlueIncome}
                   onChange={(e) => setAdvanced({ ...advanced, weeklyBlueIncome: Math.max(0, parseInt(e.target.value) || 0) })}
-                  className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-blue-400 outline-none" />
-                <span className="text-xs text-gray-400 shrink-0">张</span>
+                  className="w-full h-8 text-sm text-center border border-gray-200 rounded outline-none" onFocus={(e) => e.target.style.borderColor="#3b82f6"} onBlur={(e) => e.target.style.borderColor=""} />
+                <span className="text-xs shrink-0" style={{ color: "#60a5fa" }}>张</span>
               </div>
             </div>
           </div>
