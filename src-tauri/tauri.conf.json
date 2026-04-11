@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "WenjianSkill",
   "version": "1.0.0",
-  "identifier": "com.wenjianskill.app",
+  "identifier": "com.yuman07.wenjianskill",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
