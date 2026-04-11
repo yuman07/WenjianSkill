@@ -128,17 +128,22 @@ export default function App() {
                     });
                   };
                   return (
-                    <div key={shop} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="w-10 text-gray-500 shrink-0">{shop}</span>
-                      <span className="text-gray-400">每</span>
-                      <input type="number" min={1} value={fi.cycleWeeks}
-                        onChange={(e) => updateFI({ cycleWeeks: Math.max(1, parseInt(e.target.value) || 1) })}
-                        className="w-14 h-8 text-center border border-gray-200 rounded focus:border-amber-500 outline-none" />
-                      <span className="text-gray-400">周获取</span>
-                      <input type="number" min={0} value={fi.batchCount}
-                        onChange={(e) => updateFI({ batchCount: Math.max(0, parseInt(e.target.value) || 0) })}
-                        className="w-14 h-8 text-center border border-gray-200 rounded focus:border-amber-500 outline-none" />
-                      <span className="text-gray-400">本</span>
+                    <div key={shop} className="grid grid-cols-[2.5rem_1fr_1fr] gap-2 items-center">
+                      <span className="text-xs text-gray-500">{shop}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-400 shrink-0">每</span>
+                        <input type="number" min={1} value={fi.cycleWeeks}
+                          onChange={(e) => updateFI({ cycleWeeks: Math.max(1, parseInt(e.target.value) || 1) })}
+                          className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-amber-500 outline-none" />
+                        <span className="text-xs text-gray-400 shrink-0">周</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-400 shrink-0">获取</span>
+                        <input type="number" min={0} value={fi.batchCount}
+                          onChange={(e) => updateFI({ batchCount: Math.max(0, parseInt(e.target.value) || 0) })}
+                          className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-amber-500 outline-none" />
+                        <span className="text-xs text-gray-400 shrink-0">本</span>
+                      </div>
                     </div>
                   );
                 })}

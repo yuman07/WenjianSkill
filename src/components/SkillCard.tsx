@@ -77,16 +77,24 @@ export default function SkillCard({ index, skill, onChange }: Props) {
           </select>
         </div>
       </div>
-      <div className="mt-2 pt-2 border-t border-gray-100 flex items-center gap-1.5 text-xs text-gray-500">
-        <span>本体兑换：每</span>
-        <input type="number" min={1} value={skill.incomeCycleWeeks}
-          onChange={(e) => onChange({ ...skill, incomeCycleWeeks: Math.max(1, parseInt(e.target.value) || 1) })}
-          className="w-10 h-6 text-center text-sm border border-gray-200 rounded focus:border-amber-500 outline-none" />
-        <span>周</span>
-        <input type="number" min={0} value={skill.incomeBatchCount}
-          onChange={(e) => onChange({ ...skill, incomeBatchCount: Math.max(0, parseInt(e.target.value) || 0) })}
-          className="w-10 h-6 text-center text-sm border border-gray-200 rounded focus:border-amber-500 outline-none" />
-        <span>本</span>
+      <div className="mt-2 pt-2 border-t border-gray-100">
+        <label className="block text-xs text-gray-500 mb-1">本体兑换</label>
+        <div className="grid grid-cols-2 gap-x-3">
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-400 shrink-0">每</span>
+            <input type="number" min={1} value={skill.incomeCycleWeeks}
+              onChange={(e) => onChange({ ...skill, incomeCycleWeeks: Math.max(1, parseInt(e.target.value) || 1) })}
+              className={inputCls} />
+            <span className="text-xs text-gray-400 shrink-0">周</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-400 shrink-0">获取</span>
+            <input type="number" min={0} value={skill.incomeBatchCount}
+              onChange={(e) => onChange({ ...skill, incomeBatchCount: Math.max(0, parseInt(e.target.value) || 0) })}
+              className={inputCls} />
+            <span className="text-xs text-gray-400 shrink-0">本</span>
+          </div>
+        </div>
       </div>
     </div>
   );
