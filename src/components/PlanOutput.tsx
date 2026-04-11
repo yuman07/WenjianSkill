@@ -88,6 +88,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                 {week.upgrades.map((u, i) => {
                   const donorList = formatDonors(u.otherPagesConsumed, skills);
                   const isLast = i === week.upgrades.length - 1;
+                  const nextSkillDiff = !isLast && week.upgrades[i + 1].skillIndex !== u.skillIndex;
                   return (
                     <div key={i} className="ml-3">
                       <div className="text-sm text-gray-800">
@@ -101,7 +102,10 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                         {u.purplePagesUsed > 0 && <>，紫色 {u.purplePagesUsed}</>}
                         {u.bluePagesUsed > 0 && <>，蓝色 {u.bluePagesUsed}</>}
                       </div>
-                      {!isLast && <hr className="my-2 border-gray-100" />}
+                      {!isLast && (nextSkillDiff
+                        ? <hr className="my-3 border-gray-300" />
+                        : <hr className="my-2 border-gray-100" />
+                      )}
                     </div>
                   );
                 })}

@@ -64,7 +64,10 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
       if (u.purplePagesUsed > 0) costs.push(`紫色 ${u.purplePagesUsed}`);
       if (u.bluePagesUsed > 0) costs.push(`蓝色 ${u.bluePagesUsed}`);
       lines.push(`       消耗: ${costs.join(", ")}`);
-      if (ui < week.upgrades.length - 1) lines.push("     ──────");
+      if (ui < week.upgrades.length - 1) {
+        const nextSkillDiff = week.upgrades[ui + 1].skillIndex !== u.skillIndex;
+        lines.push(nextSkillDiff ? "     ════════════════════" : "     ──────");
+      }
     }
     lines.push("");
   }
