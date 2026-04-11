@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import SkillCard from "./components/SkillCard";
 import PlanOutput from "./components/PlanOutput";
@@ -27,33 +27,33 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const initialized = useRef(false);
 
-  // Load persisted state on startup
+  // Load persisted state on startup, merging with defaults for forward compatibility
   useEffect(() => {
     loadState().then((saved) => {
       if (saved) {
-        setSkills(saved.skills);
-        setPurplePages(saved.purplePages);
-        setBluePages(saved.bluePages);
-        setAdvanced(saved.advanced);
+        const defSkill = defaultCombatSkill();
+        setSkills(saved.skills.map((s) => ({ ...defSkill, ...s })));
+        setPurplePages(saved.purplePages ?? 0);
+        setBluePages(saved.bluePages ?? 0);
+        const defAdv = defaultAdvancedSettings();
+        setAdvanced({
+          ...defAdv,
+          ...saved.advanced,
+          fodderIncome: { ...defAdv.fodderIncome, ...saved.advanced.fodderIncome },
+        });
       }
       initialized.current = true;
     });
   }, []);
 
-  // Auto-save when any input changes (debounced)
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const debouncedSave = useCallback(() => {
+  // Auto-save when any input changes (debounced via effect cleanup)
+  useEffect(() => {
     if (!initialized.current) return;
-    clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
+    const timer = setTimeout(() => {
       saveState({ skills, purplePages, bluePages, advanced });
     }, 500);
+    return () => clearTimeout(timer);
   }, [skills, purplePages, bluePages, advanced]);
-
-  useEffect(() => {
-    debouncedSave();
-    return () => clearTimeout(saveTimer.current);
-  }, [debouncedSave]);
 
   const updateSkill = (idx: number, skill: CombatSkillInput) => {
     const next = [...skills];
