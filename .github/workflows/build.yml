@@ -34,10 +34,11 @@ jobs:
           node-version: 24
       - uses: dtolnay/rust-toolchain@stable
       - run: npm install
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build frontend
+        run: npm run build
+      - name: Build Rust (release)
+        run: cargo build --release --manifest-path src-tauri/Cargo.toml
       - uses: actions/upload-artifact@v7
         with:
           name: WenjianSkill-Windows
-          path: src-tauri/target/release/bundle/nsis/*.exe
+          path: src-tauri/target/release/wenjian-skill.exe
