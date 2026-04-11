@@ -61,10 +61,11 @@ export default function App() {
     setSkills(next);
   };
 
-  // Detect duplicate skills (same realm+class+shop)
+  // Detect duplicate skills (same realm+class+shop); 百族 skills are exempt
   const duplicateSet = new Set<number>();
   const seen = new Map<string, number>();
   skills.forEach((s, i) => {
+    if (s.skillClass === "百族") return; // 百族神通允许重复
     const key = `${s.realm}|${s.skillClass}|${s.shop}`;
     if (seen.has(key)) {
       duplicateSet.add(seen.get(key)!);
@@ -76,7 +77,7 @@ export default function App() {
 
   const handleGenerate = async () => {
     if (duplicateSet.size > 0) {
-      setError("存在重复的神通（相同境界+职业+商店），请修改后重试");
+      setError("存在重复的神通（相同境界+职业+商店），百族神通除外，请修改后重试");
       return;
     }
 
