@@ -95,7 +95,7 @@ export default function App() {
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-4">
 
             {/* 通用材料 */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs text-purple-500 mb-1">紫色书页</label>
                 <input
@@ -117,6 +117,14 @@ export default function App() {
                 <input
                   type="number" min={0} value={advanced.conversionStones}
                   onChange={(e) => setAdvanced({ ...advanced, conversionStones: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">每周转换次数</label>
+                <input
+                  type="number" min={3} max={10} value={advanced.freeConversionsPerWeek}
+                  onChange={(e) => setAdvanced({ ...advanced, freeConversionsPerWeek: Math.min(10, Math.max(3, parseInt(e.target.value) || 3)) })}
                   className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
                 />
               </div>

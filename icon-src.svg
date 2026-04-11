@@ -63,7 +63,7 @@
   </g>
 
   <!-- === Chinese Sword (中式直剑) === -->
-  <g transform="translate(268,185) rotate(32)">
+  <g transform="translate(268,215) rotate(32)">
     <!-- Blade - straight, parallel edges, narrow (直剑特征) -->
     <polygon points="-5,-155 5,-155 6,-20 -6,-20" fill="url(#blade)"/>
     <!-- Blade tip - tapered point -->
@@ -97,11 +97,11 @@
   </g>
 
   <!-- Sparkle effects -->
-  <circle cx="315" cy="100" r="3" fill="#f59e0b" opacity="0.8"/>
-  <circle cx="175" cy="150" r="2" fill="#fbbf24" opacity="0.6"/>
-  <circle cx="345" cy="165" r="2.5" fill="#f59e0b" opacity="0.7"/>
-  <circle cx="195" cy="95" r="2" fill="#fcd34d" opacity="0.5"/>
+  <circle cx="315" cy="120" r="3" fill="#f59e0b" opacity="0.8"/>
+  <circle cx="175" cy="160" r="2" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="345" cy="180" r="2.5" fill="#f59e0b" opacity="0.7"/>
+  <circle cx="195" cy="110" r="2" fill="#fcd34d" opacity="0.5"/>
   <!-- Sword qi glow -->
-  <circle cx="230" cy="75" r="4" fill="#e8eef6" opacity="0.3"/>
-  <circle cx="245" cy="60" r="3" fill="#e8eef6" opacity="0.2"/>
+  <circle cx="230" cy="100" r="4" fill="#e8eef6" opacity="0.3"/>
+  <circle cx="245" cy="85" r="3" fill="#e8eef6" opacity="0.2"/>
 </svg>

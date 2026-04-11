@@ -257,6 +257,8 @@ pub struct AdvancedSettings {
     pub weekly_shop_income: ShopMap,
     #[serde(rename = "baizuCycleWeeks")]
     pub baizu_cycle_weeks: u32,
+    #[serde(rename = "freeConversionsPerWeek")]
+    pub free_conversions_per_week: u32,
     #[serde(rename = "weeklyPurpleIncome")]
     pub weekly_purple_income: u32,
     #[serde(rename = "weeklyBlueIncome")]

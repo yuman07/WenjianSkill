@@ -1,7 +1,7 @@
 use crate::models::*;
 
 const PAGES_PER_UNIT: u32 = 40;
-const FREE_CONVERSIONS_PER_WEEK: u32 = 6;
+const DEFAULT_FREE_CONVERSIONS: u32 = 3;
 const MAX_WEEKS: u32 = 200;
 
 /// 规划器状态
@@ -16,6 +16,7 @@ struct PlannerState {
     conversion_stones: u32,
     weekly_shop_income: ShopMap,
     baizu_cycle_weeks: u32,  // 百族每 N 周获取 1 本
+    free_conversions_per_week: u32,
     weekly_purple_income: u32,
     weekly_blue_income: u32,
 }
@@ -33,6 +34,7 @@ impl PlannerState {
             conversion_stones: input.advanced.conversion_stones,
             weekly_shop_income: input.advanced.weekly_shop_income.clone(),
             baizu_cycle_weeks: input.advanced.baizu_cycle_weeks,
+            free_conversions_per_week: input.advanced.free_conversions_per_week,
             weekly_purple_income: input.advanced.weekly_purple_income,
             weekly_blue_income: input.advanced.weekly_blue_income,
         }
@@ -333,7 +335,7 @@ fn plan_one_week(state: &mut PlannerState, week: u32, phase1: bool) -> WeekPlan 
     }
 
     // Step 2: 执行转换（非战斗池 → 战斗神通本体）
-    let mut free_conversions_left = FREE_CONVERSIONS_PER_WEEK;
+    let mut free_conversions_left = state.free_conversions_per_week;
 
     // 收集需要本体书页的战斗神通，按紧急度排序
     let mut conversion_needs: Vec<(usize, u32)> = Vec::new();
