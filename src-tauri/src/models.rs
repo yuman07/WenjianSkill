@@ -186,79 +186,16 @@ pub struct CombatSkillInput {
     #[serde(rename = "targetLevel")]
     pub target_level: SkillLevel,
     pub label: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ShopMap {
-    #[serde(rename = "论剑")]
-    pub lun_jian: u32,
-    #[serde(rename = "诸天")]
-    pub zhu_tian: u32,
-    #[serde(rename = "宗门")]
-    pub zong_men: u32,
-    #[serde(rename = "道蕴")]
-    pub dao_yun: u32,
-    #[serde(rename = "百族")]
-    pub bai_zu: u32,
-}
-
-impl ShopMap {
-    pub fn get(&self, shop: Shop) -> u32 {
-        match shop {
-            Shop::LunJian => self.lun_jian,
-            Shop::ZhuTian => self.zhu_tian,
-            Shop::ZongMen => self.zong_men,
-            Shop::DaoYun => self.dao_yun,
-            Shop::BaiZu => self.bai_zu,
-        }
-    }
-
-    pub fn set(&mut self, shop: Shop, val: u32) {
-        match shop {
-            Shop::LunJian => self.lun_jian = val,
-            Shop::ZhuTian => self.zhu_tian = val,
-            Shop::ZongMen => self.zong_men = val,
-            Shop::DaoYun => self.dao_yun = val,
-            Shop::BaiZu => self.bai_zu = val,
-        }
-    }
-
-    pub fn add(&mut self, shop: Shop, val: u32) {
-        self.set(shop, self.get(shop) + val);
-    }
-
-    pub fn sub_clamped(&mut self, shop: Shop, val: u32) {
-        let cur = self.get(shop);
-        self.set(shop, cur.saturating_sub(val));
-    }
-
-    pub fn zero() -> Self {
-        ShopMap {
-            lun_jian: 0,
-            zhu_tian: 0,
-            zong_men: 0,
-            dao_yun: 0,
-            bai_zu: 0,
-        }
-    }
-
-    pub fn total(&self) -> u32 {
-        self.lun_jian + self.zhu_tian + self.zong_men + self.dao_yun + self.bai_zu
-    }
+    #[serde(rename = "incomeCycleWeeks")]
+    pub income_cycle_weeks: u32,
+    #[serde(rename = "incomeBatchCount")]
+    pub income_batch_count: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedSettings {
     #[serde(rename = "conversionStones")]
     pub conversion_stones: u32,
-    #[serde(rename = "nonCombatPools")]
-    pub non_combat_pools: ShopMap,
-    #[serde(rename = "weeklyShopIncome")]
-    pub weekly_shop_income: ShopMap,
-    #[serde(rename = "daoyunCycleWeeks")]
-    pub daoyun_cycle_weeks: u32,
-    #[serde(rename = "baizuCycleWeeks")]
-    pub baizu_cycle_weeks: u32,
     #[serde(rename = "freeConversionsPerWeek")]
     pub free_conversions_per_week: u32,
     #[serde(rename = "weeklyPurpleIncome")]
@@ -285,6 +222,8 @@ pub struct ConversionAction {
     pub shop: Shop,
     #[serde(rename = "targetSkillIndex")]
     pub target_skill_index: usize,
+    #[serde(rename = "fromSkillIndex")]
+    pub from_skill_index: usize,
     #[serde(rename = "usedStone")]
     pub used_stone: bool,
     pub pages: u32,
@@ -300,8 +239,9 @@ pub struct UpgradeAction {
     pub to_level: SkillLevel,
     #[serde(rename = "selfPagesUsed")]
     pub self_pages_used: u32,
+    /// key = donor skill index as string, value = pages consumed
     #[serde(rename = "otherPagesConsumed")]
-    pub other_pages_consumed: ShopMap,
+    pub other_pages_consumed: std::collections::HashMap<String, u32>,
     #[serde(rename = "purplePagesUsed")]
     pub purple_pages_used: u32,
     #[serde(rename = "bluePagesUsed")]
@@ -309,10 +249,9 @@ pub struct UpgradeAction {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ShopAcquisition {
-    pub shop: Shop,
-    #[serde(rename = "targetSkillIndex")]
-    pub target_skill_index: Option<usize>,
+pub struct SkillIncome {
+    #[serde(rename = "skillIndex")]
+    pub skill_index: usize,
     pub pages: u32,
 }
 
@@ -322,8 +261,6 @@ pub struct StateSnapshot {
     pub skill_levels: Vec<SkillLevel>,
     #[serde(rename = "skillPages")]
     pub skill_pages: Vec<u32>,
-    #[serde(rename = "nonCombatPools")]
-    pub non_combat_pools: ShopMap,
     #[serde(rename = "purplePages")]
     pub purple_pages: u32,
     #[serde(rename = "bluePages")]
@@ -335,7 +272,7 @@ pub struct StateSnapshot {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeekPlan {
     pub week: u32,
-    pub acquisitions: Vec<ShopAcquisition>,
+    pub incomes: Vec<SkillIncome>,
     pub conversions: Vec<ConversionAction>,
     pub upgrades: Vec<UpgradeAction>,
     pub snapshot: StateSnapshot,

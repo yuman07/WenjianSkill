@@ -11,32 +11,23 @@ function divider(): string {
 
 function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
   const lines: string[] = [];
-
-  const hasContent = week.acquisitions.length > 0
-    || week.conversions.length > 0
-    || week.upgrades.length > 0;
-
+  const hasContent = week.incomes.length > 0 || week.conversions.length > 0 || week.upgrades.length > 0;
   const isInitial = week.week === 0;
-  const isBonus = !isInitial && week.acquisitions.length === 0
-    && week.conversions.length === 0 && week.upgrades.length > 0;
+  const isBonus = !isInitial && week.incomes.length === 0 && week.conversions.length === 0 && week.upgrades.length > 0;
 
   if (isInitial) lines.push("【立即可做】");
   else if (isBonus) lines.push("【目标达成后 · 剩余资源分配】");
   else if (!hasContent) lines.push(`【第 ${week.week} 周 · 积累资源】`);
   else lines.push(`【第 ${week.week} 周】`);
-
   lines.push("");
 
   let step = 1;
 
-  if (week.acquisitions.length > 0) {
+  if (week.incomes.length > 0) {
     lines.push(`  ${step}. 兑换书页`);
     step++;
-    for (const a of week.acquisitions) {
-      const target = a.targetSkillIndex !== null
-        ? n(skills, a.targetSkillIndex)
-        : "狗粮池";
-      lines.push(`     - 从「${a.shop}」商店兑换 ${a.pages} 张 → ${target}`);
+    for (const inc of week.incomes) {
+      lines.push(`     - ${n(skills, inc.skillIndex)} +${inc.pages} 张本体书页`);
     }
     lines.push("");
   }
@@ -46,7 +37,7 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
     step++;
     for (const c of week.conversions) {
       const stone = c.usedStone ? "（消耗转换石）" : "";
-      lines.push(`     - 从「${c.shop}」狗粮池取 ${c.pages} 张 → ${n(skills, c.targetSkillIndex)}${stone}`);
+      lines.push(`     - 从 ${n(skills, c.fromSkillIndex)} 取 ${c.pages} 张 → ${n(skills, c.targetSkillIndex)}${stone}`);
     }
     lines.push("");
   }
@@ -55,11 +46,10 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
     lines.push(`  ${step}. 升级神通`);
     for (const u of week.upgrades) {
       lines.push(`     - ${n(skills, u.skillIndex)}: ${u.fromLevel} → ${u.toLevel}`);
-      const costs: string[] = [];
-      costs.push(`本体${u.selfPagesUsed}张`);
-      const otherEntries = Object.entries(u.otherPagesConsumed).filter(([, v]) => (v as number) > 0);
-      if (otherEntries.length > 0) {
-        costs.push(`仙品: ${otherEntries.map(([shop, v]) => `${shop}狗粮${v}张`).join("、")}`);
+      const costs: string[] = [`本体${u.selfPagesUsed}张`];
+      const donors = Object.entries(u.otherPagesConsumed).filter(([, v]) => (v as number) > 0);
+      if (donors.length > 0) {
+        costs.push(`狗粮: ${donors.map(([idx, v]) => `${n(skills, parseInt(idx))}${v}张`).join("、")}`);
       }
       if (u.purplePagesUsed > 0) costs.push(`紫色${u.purplePagesUsed}`);
       if (u.bluePagesUsed > 0) costs.push(`蓝色${u.bluePagesUsed}`);
@@ -73,7 +63,6 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
     lines.push("");
   }
 
-  // 状态快照
   lines.push("  本周结束后:");
   for (let i = 0; i < week.snapshot.skillLevels.length; i++) {
     const extra = week.snapshot.skillPages[i] > 0 ? `（余${week.snapshot.skillPages[i]}页）` : "";
@@ -86,12 +75,9 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
 
 export function generatePlanText(output: PlannerOutput, skills: CombatSkillInput[]): string {
   const lines: string[] = [];
-
   lines.push("问剑长生 · 神通升级规划方案");
   lines.push(divider());
   lines.push("");
-
-  // 目标总览
   lines.push("目标:");
   for (let i = 0; i < skills.length; i++) {
     lines.push(`  ${i + 1}. ${skillDisplayName(skills[i])}  当前 ${skills[i].currentLevel} → 目标 ${skills[i].targetLevel}`);
@@ -99,15 +85,11 @@ export function generatePlanText(output: PlannerOutput, skills: CombatSkillInput
   lines.push("");
 
   const totalWeeks = output.weeks.length > 0 ? output.weeks[output.weeks.length - 1].week : 0;
-
   if (output.feasible) {
     lines.push(`规划结果: 全部目标可达成，共需 ${totalWeeks} 周`);
   } else {
     lines.push("规划结果: 部分目标无法达成");
-    for (const r of output.unreachableReasons) {
-      lines.push(`  ! ${r}`);
-    }
-    lines.push("以下为当前资源下的最佳方案:");
+    for (const r of output.unreachableReasons) lines.push(`  ! ${r}`);
   }
 
   lines.push("");
@@ -126,6 +108,5 @@ export function generatePlanText(output: PlannerOutput, skills: CombatSkillInput
     lines.push(formatWeek(w, skills));
     lines.push(divider());
   }
-
   return lines.join("\n");
 }

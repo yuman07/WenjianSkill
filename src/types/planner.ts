@@ -1,6 +1,7 @@
 import type { Realm, Shop, SkillClass, SkillLevel } from "./game";
+import { defaultIncomeForShop } from "./game";
 
-/** 单个战斗神通输入（前端用，包含境界和职业用于显示） */
+/** 单个战斗神通输入（前端用） */
 export interface CombatSkillInput {
   realm: Realm;
   skillClass: SkillClass;
@@ -8,6 +9,8 @@ export interface CombatSkillInput {
   currentLevel: SkillLevel;
   remainingPages: number;
   targetLevel: SkillLevel;
+  incomeCycleWeeks: number; // 每 N 周
+  incomeBatchCount: number; // 获取 M 本
 }
 
 /** 生成显示名称 */
@@ -15,23 +18,21 @@ export function skillDisplayName(s: CombatSkillInput): string {
   return `${s.realm}·${s.skillClass}·${s.shop}`;
 }
 
-/** 发给 Rust 后端的输入（label 由前端自动生成） */
+/** 发给 Rust 后端的输入 */
 export interface PlannerBackendSkill {
   shop: Shop;
   currentLevel: SkillLevel;
   remainingPages: number;
   targetLevel: SkillLevel;
   label: string;
+  incomeCycleWeeks: number;
+  incomeBatchCount: number;
 }
 
-/** 高级设置 */
+/** 设置 */
 export interface AdvancedSettings {
   conversionStones: number;
-  nonCombatPools: Record<Shop, number>;
-  weeklyShopIncome: Record<Shop, number>;
-  daoyunCycleWeeks: number; // 道蕴每 N 周获取 1 本，默认 3
-  baizuCycleWeeks: number; // 百族每 N 周获取 1 本，默认 4
-  freeConversionsPerWeek: number; // 每周免费转换次数，3-10，默认 3
+  freeConversionsPerWeek: number;
   weeklyPurpleIncome: number;
   weeklyBlueIncome: number;
 }
@@ -44,14 +45,10 @@ export interface PlannerInput {
   advanced: AdvancedSettings;
 }
 
-/** 默认高级设置 */
+/** 默认设置 */
 export function defaultAdvancedSettings(): AdvancedSettings {
   return {
     conversionStones: 0,
-    nonCombatPools: { 论剑: 0, 诸天: 0, 宗门: 0, 道蕴: 0, 百族: 0 },
-    weeklyShopIncome: { 论剑: 1, 诸天: 1, 宗门: 1, 道蕴: 0, 百族: 0 },
-    daoyunCycleWeeks: 3,
-    baizuCycleWeeks: 4,
     freeConversionsPerWeek: 3,
     weeklyPurpleIncome: 0,
     weeklyBlueIncome: 0,
@@ -60,6 +57,7 @@ export function defaultAdvancedSettings(): AdvancedSettings {
 
 /** 默认战斗神通 */
 export function defaultCombatSkill(): CombatSkillInput {
+  const income = defaultIncomeForShop("论剑");
   return {
     realm: "人界一",
     skillClass: "剑",
@@ -67,6 +65,8 @@ export function defaultCombatSkill(): CombatSkillInput {
     currentLevel: "1星",
     remainingPages: 0,
     targetLevel: "天1",
+    incomeCycleWeeks: income.cycleWeeks,
+    incomeBatchCount: income.batchCount,
   };
 }
 
@@ -74,6 +74,7 @@ export function defaultCombatSkill(): CombatSkillInput {
 export interface ConversionAction {
   shop: Shop;
   targetSkillIndex: number;
+  fromSkillIndex: number;
   usedStone: boolean;
   pages: number;
 }
@@ -84,28 +85,26 @@ export interface UpgradeAction {
   fromLevel: SkillLevel;
   toLevel: SkillLevel;
   selfPagesUsed: number;
-  otherPagesConsumed: Record<Shop, number>;
+  otherPagesConsumed: Record<string, number>; // skill index → pages taken
   purplePagesUsed: number;
   bluePagesUsed: number;
 }
 
-/** 每周的商店获取推荐 */
-export interface ShopAcquisition {
-  shop: Shop;
-  targetSkillIndex: number | null;
+/** 每周的收入 */
+export interface SkillIncome {
+  skillIndex: number;
   pages: number;
 }
 
 /** 单周规划 */
 export interface WeekPlan {
   week: number;
-  acquisitions: ShopAcquisition[];
+  incomes: SkillIncome[];
   conversions: ConversionAction[];
   upgrades: UpgradeAction[];
   snapshot: {
     skillLevels: SkillLevel[];
     skillPages: number[];
-    nonCombatPools: Record<Shop, number>;
     purplePages: number;
     bluePages: number;
     conversionStonesLeft: number;

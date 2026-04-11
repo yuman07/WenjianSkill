@@ -2,8 +2,6 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import SkillCard from "./components/SkillCard";
 import PlanOutput from "./components/PlanOutput";
-import { SHOPS } from "./types/game";
-import type { Shop } from "./types/game";
 import type {
   CombatSkillInput,
   PlannerInput,
@@ -31,20 +29,6 @@ export default function App() {
     setSkills(next);
   };
 
-  const updatePool = (shop: Shop, val: number) => {
-    setAdvanced({
-      ...advanced,
-      nonCombatPools: { ...advanced.nonCombatPools, [shop]: Math.max(0, val) },
-    });
-  };
-
-  const updateIncome = (shop: Shop, val: number) => {
-    setAdvanced({
-      ...advanced,
-      weeklyShopIncome: { ...advanced.weeklyShopIncome, [shop]: Math.max(0, val) },
-    });
-  };
-
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
@@ -57,6 +41,8 @@ export default function App() {
         remainingPages: s.remainingPages,
         targetLevel: s.targetLevel,
         label: skillDisplayName(s),
+        incomeCycleWeeks: s.incomeCycleWeeks,
+        incomeBatchCount: s.incomeBatchCount,
       })),
       purplePages,
       bluePages,
@@ -93,8 +79,6 @@ export default function App() {
         <section className="mb-6">
           <h2 className="text-sm font-medium text-gray-700 mb-3">材料与设置</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-4">
-
-            {/* 通用材料 */}
             <div className="grid grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs text-purple-500 mb-1">紫色书页</label>
@@ -129,68 +113,6 @@ export default function App() {
                 />
               </div>
             </div>
-
-            {/* 狗粮池 */}
-            <div>
-              <label className="block text-xs text-gray-500 mb-2">狗粮池（不用的神通书页，按商店汇总）</label>
-              <div className="grid grid-cols-5 gap-2">
-                {SHOPS.map((shop) => (
-                  <div key={shop}>
-                    <label className="block text-xs text-gray-400 mb-1">{shop}</label>
-                    <input
-                      type="number" min={0} step={40}
-                      value={advanced.nonCombatPools[shop]}
-                      onChange={(e) => updatePool(shop, parseInt(e.target.value) || 0)}
-                      className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 每周收入 */}
-            <div>
-              <label className="block text-xs text-gray-500 mb-2">每周商店兑换次数（每次兑换 40 张书页）</label>
-              <div className="grid grid-cols-3 gap-2">
-                {SHOPS.filter((s) => s !== "百族" && s !== "道蕴").map((shop) => (
-                  <div key={shop}>
-                    <label className="block text-xs text-gray-400 mb-1">{shop}</label>
-                    <input
-                      type="number" min={0}
-                      value={advanced.weeklyShopIncome[shop]}
-                      onChange={(e) => updateIncome(shop, parseInt(e.target.value) || 0)}
-                      className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 道蕴 + 百族周期 */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">道蕴商店：每</span>
-                <input
-                  type="number" min={0}
-                  value={advanced.daoyunCycleWeeks}
-                  onChange={(e) => setAdvanced({ ...advanced, daoyunCycleWeeks: Math.max(0, parseInt(e.target.value) || 0) })}
-                  className="w-16 text-sm text-center border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
-                />
-                <span className="text-xs text-gray-500">周兑换 1 本（填 0 表示不兑换）</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">百族商店：每</span>
-                <input
-                  type="number" min={0}
-                  value={advanced.baizuCycleWeeks}
-                  onChange={(e) => setAdvanced({ ...advanced, baizuCycleWeeks: Math.max(0, parseInt(e.target.value) || 0) })}
-                  className="w-16 text-sm text-center border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
-                />
-                <span className="text-xs text-gray-500">周兑换 1 本（填 0 表示不兑换）</span>
-              </div>
-            </div>
-
-            {/* 每周紫色/蓝色收入 */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">紫色书页每周收入</label>
@@ -212,7 +134,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* 生成按钮 */}
         <button
           onClick={handleGenerate}
           disabled={loading}

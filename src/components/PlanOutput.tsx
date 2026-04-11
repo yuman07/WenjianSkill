@@ -17,21 +17,15 @@ function name(skills: CombatSkillInput[], idx: number): string {
 function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[] }) {
   const [open, setOpen] = useState(week.week <= 3);
 
-  const hasContent = week.acquisitions.length > 0
-    || week.conversions.length > 0
-    || week.upgrades.length > 0;
-
+  const hasContent = week.incomes.length > 0 || week.conversions.length > 0 || week.upgrades.length > 0;
   const isInitial = week.week === 0;
-  const isBonus = !isInitial && week.acquisitions.length === 0 && week.conversions.length === 0 && week.upgrades.length > 0;
+  const isBonus = !isInitial && week.incomes.length === 0 && week.conversions.length === 0 && week.upgrades.length > 0;
 
   let title: string;
   if (isInitial) title = "立即可做";
   else if (isBonus) title = "目标达成后 · 剩余资源分配";
   else if (!hasContent) title = `第 ${week.week} 周 · 积累资源`;
   else title = `第 ${week.week} 周`;
-
-  const upgradeCount = week.upgrades.length;
-  const conversionCount = week.conversions.length;
 
   return (
     <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
@@ -41,15 +35,11 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
       >
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-gray-800">{title}</span>
-          {upgradeCount > 0 && (
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-              升级 ×{upgradeCount}
-            </span>
+          {week.upgrades.length > 0 && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">升级 ×{week.upgrades.length}</span>
           )}
-          {conversionCount > 0 && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-              转换 ×{conversionCount}
-            </span>
+          {week.conversions.length > 0 && (
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">转换 ×{week.conversions.length}</span>
           )}
         </div>
         <span className={`text-gray-400 text-xs transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
@@ -57,18 +47,14 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
 
       {open && (
         <div className="px-4 pb-4 border-t border-gray-100">
-          {/* 操作步骤 */}
           <div className="mt-3 space-y-3">
-            {/* 获取 */}
-            {week.acquisitions.length > 0 && (
+            {/* 收入 */}
+            {week.incomes.length > 0 && (
               <div>
                 <div className="text-xs font-medium text-gray-500 mb-1.5">第一步：兑换书页</div>
-                {week.acquisitions.map((a, i) => (
+                {week.incomes.map((inc, i) => (
                   <div key={i} className="text-sm text-gray-700 ml-3 leading-relaxed">
-                    从<span className="font-medium text-amber-600">「{a.shop}」</span>商店兑换 {a.pages} 张书页，
-                    {a.targetSkillIndex !== null
-                      ? <>给 <span className="font-medium">{name(skills, a.targetSkillIndex)}</span></>
-                      : <span className="text-gray-500">存入狗粮池备用</span>}
+                    <span className="font-medium">{name(skills, inc.skillIndex)}</span> +{inc.pages} 张本体书页
                   </div>
                 ))}
               </div>
@@ -78,11 +64,11 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
             {week.conversions.length > 0 && (
               <div>
                 <div className="text-xs font-medium text-gray-500 mb-1.5">
-                  {week.acquisitions.length > 0 ? "第二步" : "第一步"}：转换书页
+                  {week.incomes.length > 0 ? "第二步" : "第一步"}：转换书页
                 </div>
                 {week.conversions.map((c, i) => (
                   <div key={i} className="text-sm text-gray-700 ml-3 leading-relaxed">
-                    从「{c.shop}」狗粮池中取 {c.pages} 张，转换给{" "}
+                    从 <span className="font-medium">{name(skills, c.fromSkillIndex)}</span> 取 {c.pages} 张，转给{" "}
                     <span className="font-medium">{name(skills, c.targetSkillIndex)}</span>
                     {c.usedStone && <span className="ml-1 text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">消耗转换石</span>}
                   </div>
@@ -94,26 +80,23 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
             {week.upgrades.length > 0 && (
               <div>
                 <div className="text-xs font-medium text-gray-500 mb-1.5">
-                  {week.acquisitions.length > 0 && week.conversions.length > 0
-                    ? "第三步"
-                    : week.acquisitions.length > 0 || week.conversions.length > 0
-                      ? "第二步"
-                      : "操作"}：升级神通
+                  {week.incomes.length > 0 && week.conversions.length > 0 ? "第三步"
+                    : week.incomes.length > 0 || week.conversions.length > 0 ? "第二步"
+                    : "操作"}：升级神通
                 </div>
                 {week.upgrades.map((u, i) => {
-                  const otherEntries = Object.entries(u.otherPagesConsumed).filter(([, v]) => (v as number) > 0);
+                  const donors = Object.entries(u.otherPagesConsumed).filter(([, v]) => (v as number) > 0);
                   return (
                     <div key={i} className="ml-3 mb-2">
                       <div className="text-sm text-gray-800">
                         <span className="font-medium">{name(skills, u.skillIndex)}</span>{" "}
-                        <span className="text-gray-400">{u.fromLevel}</span>{" "}
-                        <span className="text-gray-400">→</span>{" "}
+                        <span className="text-gray-400">{u.fromLevel} → </span>
                         <span className="font-medium text-green-600">{u.toLevel}</span>
                       </div>
                       <div className="text-xs text-gray-400 mt-0.5">
                         消耗：本体 {u.selfPagesUsed} 张
-                        {otherEntries.length > 0 && (
-                          <>，仙品 {otherEntries.map(([shop, v]) => `${shop}狗粮${v}张`).join("、")}</>
+                        {donors.length > 0 && (
+                          <>，狗粮 {donors.map(([idx, v]) => `${name(skills, parseInt(idx))}${v}张`).join("、")}</>
                         )}
                         {u.purplePagesUsed > 0 && <>，紫色 {u.purplePagesUsed}</>}
                         {u.bluePagesUsed > 0 && <>，蓝色 {u.bluePagesUsed}</>}
@@ -135,8 +118,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1">
               {week.snapshot.skillLevels.map((lv, i) => (
                 <div key={i} className="text-xs text-gray-600">
-                  {name(skills, i)}：
-                  <span className="font-medium text-gray-800">{lv}</span>
+                  {name(skills, i)}：<span className="font-medium text-gray-800">{lv}</span>
                   {week.snapshot.skillPages[i] > 0 && (
                     <span className="text-gray-400">（余 {week.snapshot.skillPages[i]} 页）</span>
                   )}
@@ -145,8 +127,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
             </div>
             <div className="mt-1.5 text-xs text-gray-400">
               紫色 {week.snapshot.purplePages} · 蓝色 {week.snapshot.bluePages}
-              {week.snapshot.conversionStonesLeft > 0 &&
-                ` · 转换石 ${week.snapshot.conversionStonesLeft}`}
+              {week.snapshot.conversionStonesLeft > 0 && ` · 转换石 ${week.snapshot.conversionStonesLeft}`}
             </div>
           </div>
         </div>
@@ -164,14 +145,11 @@ export default function PlanOutput({ output, skills }: Props) {
       defaultPath: "神通规划方案.txt",
       filters: [{ name: "文本文件", extensions: ["txt"] }],
     });
-    if (path) {
-      await writeTextFile(path, text);
-    }
+    if (path) { await writeTextFile(path, text); }
   };
 
   return (
     <div className="space-y-3">
-      {/* 不可达提示 */}
       {!output.feasible && output.unreachableReasons.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="text-sm font-medium text-red-800 mb-2">目标无法达成</div>
@@ -182,18 +160,13 @@ export default function PlanOutput({ output, skills }: Props) {
         </div>
       )}
 
-      {/* 成功总览 + 方案 */}
       {output.feasible && (
         <>
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-green-800">
-                规划完成，共需 {totalWeeks} 周
-              </span>
-              <button
-                onClick={handleExport}
-                className="text-xs px-3 py-1 border border-green-300 rounded-lg hover:bg-green-100 transition-colors text-green-700 cursor-pointer"
-              >
+              <span className="text-sm font-medium text-green-800">规划完成，共需 {totalWeeks} 周</span>
+              <button onClick={handleExport}
+                className="text-xs px-3 py-1 border border-green-300 rounded-lg hover:bg-green-100 transition-colors text-green-700 cursor-pointer">
                 导出 TXT
               </button>
             </div>
@@ -205,10 +178,7 @@ export default function PlanOutput({ output, skills }: Props) {
               ))}
             </div>
           </div>
-
-          {output.weeks.map((w) => (
-            <WeekCard key={w.week} week={w} skills={skills} />
-          ))}
+          {output.weeks.map((w) => <WeekCard key={w.week} week={w} skills={skills} />)}
         </>
       )}
     </div>
