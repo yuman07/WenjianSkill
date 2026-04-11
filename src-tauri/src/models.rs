@@ -194,6 +194,8 @@ pub struct CombatSkillInput {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FodderIncomeEntry {
+    #[serde(rename = "initialPages")]
+    pub initial_pages: u32,
     #[serde(rename = "cycleWeeks")]
     pub cycle_weeks: u32,
     #[serde(rename = "batchCount")]
@@ -225,10 +227,16 @@ impl FodderIncomeMap {
         }
     }
 
-    pub fn pages_over_weeks(&self, shop: Shop, weeks: u32) -> u32 {
+    pub fn initial_pages(&self, shop: Shop) -> u32 {
+        self.get(shop).initial_pages
+    }
+
+    /// Total pages available over W weeks = initial + income
+    pub fn total_pages(&self, shop: Shop, weeks: u32) -> u32 {
         let e = self.get(shop);
-        if weeks == 0 || e.cycle_weeks == 0 { return 0; }
-        (weeks / e.cycle_weeks) * e.batch_count * 40
+        let income = if weeks == 0 || e.cycle_weeks == 0 { 0 }
+        else { (weeks / e.cycle_weeks) * e.batch_count * 40 };
+        e.initial_pages + income
     }
 
     pub fn pages_in_week(&self, shop: Shop, week: u32) -> u32 {

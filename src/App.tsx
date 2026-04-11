@@ -115,9 +115,9 @@ export default function App() {
                 />
               </div>
             </div>
-            {/* 狗粮池收入 */}
+            {/* 狗粮池 */}
             <div>
-              <label className="block text-xs text-gray-500 mb-2">狗粮池收入（非战斗神通的书页积累速度）</label>
+              <label className="block text-xs text-gray-500 mb-2">狗粮池（非战斗神通的书页）</label>
               <div className="space-y-2">
                 {SHOPS.map((shop) => {
                   const fi = advanced.fodderIncome[shop];
@@ -128,8 +128,14 @@ export default function App() {
                     });
                   };
                   return (
-                    <div key={shop} className="grid grid-cols-[2.5rem_1fr_1fr] gap-2 items-center">
+                    <div key={shop} className="grid grid-cols-[2.5rem_1fr_1fr_1fr] gap-2 items-center">
                       <span className="text-xs text-gray-500">{shop}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-400 shrink-0">现有</span>
+                        <input type="number" min={0} step={40} value={fi.initialPages}
+                          onChange={(e) => updateFI({ initialPages: Math.max(0, parseInt(e.target.value) || 0) })}
+                          className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-amber-500 outline-none" />
+                      </div>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-gray-400 shrink-0">每</span>
                         <input type="number" min={1} value={fi.cycleWeeks}

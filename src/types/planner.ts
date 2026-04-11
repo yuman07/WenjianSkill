@@ -29,8 +29,9 @@ export interface PlannerBackendSkill {
   incomeBatchCount: number;
 }
 
-/** 单商店狗粮收入 */
+/** 单商店狗粮设置 */
 export interface FodderIncome {
+  initialPages: number; // 当前剩余书页
   cycleWeeks: number;
   batchCount: number;
 }
@@ -54,7 +55,7 @@ export interface PlannerInput {
 
 /** 默认设置 */
 export function defaultAdvancedSettings(): AdvancedSettings {
-  const f = (): FodderIncome => ({ cycleWeeks: 2, batchCount: 1 });
+  const f = (): FodderIncome => ({ initialPages: 0, cycleWeeks: 2, batchCount: 1 });
   return {
     conversionStones: 0,
     freeConversionsPerWeek: 3,

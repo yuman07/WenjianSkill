@@ -71,7 +71,7 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
     // Fodder pool pages can be converted to same-shop skill 本体 OR used as 仙品
     let mut fodder_pool = vec![0u32; 5]; // per-shop fodder pool over W weeks
     for &shop in &Shop::ALL {
-        fodder_pool[shop.index()] = adv.fodder_income.pages_over_weeks(shop, weeks);
+        fodder_pool[shop.index()] = adv.fodder_income.total_pages(shop, weeks);
     }
 
     for &shop in &Shop::ALL {
@@ -194,7 +194,13 @@ impl SimState {
             pages: input.combat_skills.iter().map(|s| s.remaining_pages).collect(),
             shops: input.combat_skills.iter().map(|s| s.shop).collect(),
             targets: targets.to_vec(),
-            fodder_pools: [0; 5],
+            fodder_pools: {
+                let mut p = [0u32; 5];
+                for &shop in &Shop::ALL {
+                    p[shop.index()] = input.advanced.fodder_income.initial_pages(shop);
+                }
+                p
+            },
             purple: input.purple_pages,
             blue: input.blue_pages,
             stones: input.advanced.conversion_stones,
@@ -546,7 +552,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
                 if s.current_level >= s.target_level { 0 }
                 else { total_cost_between(s.current_level, s.target_level).self_pages }
             }).sum();
-        let fodder = adv.fodder_income.pages_over_weeks(shop, MAX_WEEKS);
+        let fodder = adv.fodder_income.total_pages(shop, MAX_WEEKS);
         (sp + fodder).saturating_sub(ss)
     }).sum();
     if total_surplus < total_other_need {
