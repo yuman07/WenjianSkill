@@ -515,30 +515,28 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
         ));
     }
 
-    // Per-shop 本体 check
+    // Per-shop 本体 check (combat skill pages + fodder pool must cover self needs)
     for &shop in &Shop::ALL {
         let skills_in_shop: Vec<usize> = (0..n).filter(|&i| input.combat_skills[i].shop == shop).collect();
         if skills_in_shop.is_empty() { continue; }
         let shop_pages: u32 = skills_in_shop.iter().map(|&i| {
             input.combat_skills[i].remaining_pages + skill_income_pages(&input.combat_skills[i], MAX_WEEKS)
         }).sum();
+        let fodder = adv.fodder_income.total_pages(shop, MAX_WEEKS);
         let shop_self: u32 = skills_in_shop.iter().map(|&i| {
             let s = &input.combat_skills[i];
             if s.current_level >= s.target_level { 0 }
             else { total_cost_between(s.current_level, s.target_level).self_pages }
         }).sum();
-        if shop_pages < shop_self {
-            for &i in &skills_in_shop {
-                let s = &input.combat_skills[i];
-                let need = total_cost_between(s.current_level, s.target_level).self_pages;
-                let have = s.remaining_pages + skill_income_pages(s, MAX_WEEKS);
-                if have < need {
-                    reasons.push(format!(
-                        "{}: 本体书页不足（需要 {}，最多可获得 {}）",
-                        s.label, need, have
-                    ));
-                }
-            }
+        if shop_pages + fodder < shop_self {
+            reasons.push(format!(
+                "「{}」商店本体书页不足：该商店技能合计需要 {}，技能收入最多 {} + 狗粮池最多 {}",
+                match shop {
+                    Shop::LunJian => "论剑", Shop::ZhuTian => "诸天", Shop::ZongMen => "宗门",
+                    Shop::DaoYun => "道蕴", Shop::BaiZu => "百族",
+                },
+                shop_self, shop_pages, fodder
+            ));
         }
     }
 
