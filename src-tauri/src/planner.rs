@@ -490,14 +490,53 @@ pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
 fn generate_reasons(input: &PlannerInput) -> Vec<String> {
     let mut reasons = Vec::new();
     let adv = &input.advanced;
+    let n = input.combat_skills.len();
 
-    for (i, s) in input.combat_skills.iter().enumerate() {
+    // Check global bottlenecks first (purple/blue affect all skills)
+    let mut total_purple_need: u32 = 0;
+    let mut total_blue_need: u32 = 0;
+    let mut total_other_need: u32 = 0;
+    for s in &input.combat_skills {
+        if s.current_level >= s.target_level { continue; }
+        let cost = total_cost_between(s.current_level, s.target_level);
+        total_purple_need += cost.purple_pages;
+        total_blue_need += cost.blue_pages;
+        total_other_need += cost.other_pages;
+    }
+
+    let max_purple = input.purple_pages + adv.weekly_purple_income * MAX_WEEKS;
+    let max_blue = input.blue_pages + adv.weekly_blue_income * MAX_WEEKS;
+    if max_purple < total_purple_need {
+        reasons.push(format!(
+            "紫色书页不足：所有神通合计需要 {}，当前 {}{}",
+            total_purple_need,
+            input.purple_pages,
+            if adv.weekly_purple_income > 0 {
+                format!("（每周+{}，但 {} 周也只有 {}）", adv.weekly_purple_income, MAX_WEEKS, max_purple)
+            } else {
+                "，且无每周收入".to_string()
+            }
+        ));
+    }
+    if max_blue < total_blue_need {
+        reasons.push(format!(
+            "蓝色书页不足：所有神通合计需要 {}，当前 {}{}",
+            total_blue_need,
+            input.blue_pages,
+            if adv.weekly_blue_income > 0 {
+                format!("（每周+{}，但 {} 周也只有 {}）", adv.weekly_blue_income, MAX_WEEKS, max_blue)
+            } else {
+                "，且无每周收入".to_string()
+            }
+        ));
+    }
+
+    // Check per-skill 本体 bottleneck
+    for i in 0..n {
+        let s = &input.combat_skills[i];
         if s.current_level >= s.target_level { continue; }
 
         let cost = total_cost_between(s.current_level, s.target_level);
-        let mut issues = Vec::new();
-
-        // Check 本体: max possible from this shop over MAX_WEEKS
         let shop = s.shop;
         let max_income = if shop == Shop::BaiZu {
             if adv.baizu_cycle_weeks > 0 { MAX_WEEKS / adv.baizu_cycle_weeks } else { 0 }
@@ -505,35 +544,45 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
             adv.weekly_shop_income.get(shop) * MAX_WEEKS
         };
         let max_self = s.remaining_pages + max_income * PAGES_PER_UNIT
-            + adv.non_combat_pools.get(shop); // pool can also be converted
+            + adv.non_combat_pools.get(shop);
         if max_self < cost.self_pages {
-            issues.push(format!("本体书页不足（需要{}，最多可获得{}）", cost.self_pages, max_self));
+            reasons.push(format!(
+                "{}: 本体书页不足（需要 {}，该商店最多可获得 {}）",
+                s.label, cost.self_pages, max_self
+            ));
         }
+    }
 
-        // Check purple
-        let max_purple = input.purple_pages + adv.weekly_purple_income * MAX_WEEKS;
-        if max_purple < cost.purple_pages {
-            issues.push(format!("紫色书页不足（需要{}，无每周收入无法积累）", cost.purple_pages));
-        }
+    // Check global 仙品 (cross-shop)
+    let max_fodder: u32 = Shop::ALL.iter().map(|&shop| {
+        let income = if shop == Shop::BaiZu {
+            if adv.baizu_cycle_weeks > 0 { MAX_WEEKS / adv.baizu_cycle_weeks } else { 0 }
+        } else {
+            adv.weekly_shop_income.get(shop) * MAX_WEEKS
+        };
+        let deficit: u32 = (0..n)
+            .filter(|&i| input.combat_skills[i].shop == shop)
+            .map(|i| {
+                let c = total_cost_between(input.combat_skills[i].current_level, input.combat_skills[i].target_level);
+                let d = c.self_pages.saturating_sub(input.combat_skills[i].remaining_pages);
+                (d + PAGES_PER_UNIT - 1) / PAGES_PER_UNIT
+            })
+            .sum();
+        let pool = adv.non_combat_pools.get(shop) / PAGES_PER_UNIT + income;
+        pool.saturating_sub(deficit) * PAGES_PER_UNIT
+    }).sum();
 
-        // Check blue
-        let max_blue = input.blue_pages + adv.weekly_blue_income * MAX_WEEKS;
-        if max_blue < cost.blue_pages {
-            issues.push(format!("蓝色书页不足（需要{}，无每周收入无法积累）", cost.blue_pages));
-        }
-
-        if issues.is_empty() {
-            // Could be 仙品 or conversion capacity
-            issues.push("仙品或转换次数不足".to_string());
-        }
-
+    if max_fodder < total_other_need {
         reasons.push(format!(
-            "{}: 当前 {}，目标 {} — {}",
-            s.label,
-            s.current_level.display_name(),
-            s.target_level.display_name(),
-            issues.join("、")
+            "狗粮不足：所有神通合计需要仙品 {}，所有商店狗粮池最多可提供 {}（扣除本体转换后）",
+            total_other_need, max_fodder
         ));
     }
+
+    if reasons.is_empty() {
+        // Conversion capacity bottleneck
+        reasons.push("每周转换次数不足，无法在合理时间内完成所有转换".to_string());
+    }
+
     reasons
 }
