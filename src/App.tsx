@@ -117,6 +117,7 @@ export default function App() {
                         <input type="number" min={0} step={40} value={fi.initialPages}
                           onChange={(e) => updateFI({ initialPages: Math.max(0, parseInt(e.target.value) || 0) })}
                           className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-amber-500 outline-none" />
+                        <span className="text-xs text-gray-400 shrink-0">张</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-gray-400 shrink-0">每</span>
@@ -142,13 +143,14 @@ export default function App() {
             <div className="grid grid-cols-[4rem_1fr_1fr] gap-2 items-center">
               <span className="text-xs text-purple-500">紫色书页</span>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 shrink-0">当前</span>
+                <span className="text-xs text-gray-400 shrink-0">现有</span>
                 <input type="number" min={0} value={purplePages}
                   onChange={(e) => setPurplePages(Math.max(0, parseInt(e.target.value) || 0))}
                   className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-purple-400 outline-none" />
+                <span className="text-xs text-gray-400 shrink-0">张</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 shrink-0">每周</span>
+                <span className="text-xs text-gray-400 shrink-0">每周获取</span>
                 <input type="number" min={0} value={advanced.weeklyPurpleIncome}
                   onChange={(e) => setAdvanced({ ...advanced, weeklyPurpleIncome: Math.max(0, parseInt(e.target.value) || 0) })}
                   className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-purple-400 outline-none" />
@@ -160,13 +162,14 @@ export default function App() {
             <div className="grid grid-cols-[4rem_1fr_1fr] gap-2 items-center">
               <span className="text-xs text-blue-500">蓝色书页</span>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 shrink-0">当前</span>
+                <span className="text-xs text-gray-400 shrink-0">现有</span>
                 <input type="number" min={0} value={bluePages}
                   onChange={(e) => setBluePages(Math.max(0, parseInt(e.target.value) || 0))}
                   className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-blue-400 outline-none" />
+                <span className="text-xs text-gray-400 shrink-0">张</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-400 shrink-0">每周</span>
+                <span className="text-xs text-gray-400 shrink-0">每周获取</span>
                 <input type="number" min={0} value={advanced.weeklyBlueIncome}
                   onChange={(e) => setAdvanced({ ...advanced, weeklyBlueIncome: Math.max(0, parseInt(e.target.value) || 0) })}
                   className="w-full h-8 text-sm text-center border border-gray-200 rounded focus:border-blue-400 outline-none" />
