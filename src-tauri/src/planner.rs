@@ -101,35 +101,39 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
         return false;
     }
 
-    // 仙品 check: surplus from combat skills + remaining fodder pools
-    let total_surplus: u32 = Shop::ALL.iter().map(|&shop| {
-        let shop_pages: u32 = (0..n)
-            .filter(|&i| input.combat_skills[i].shop == shop)
-            .map(|i| total_pages[i]).sum();
-        let shop_self: u32 = (0..n)
-            .filter(|&i| input.combat_skills[i].shop == shop)
-            .map(|i| self_needed[i]).sum();
-        // Total available = skill pages + fodder pool - self needed
-        (shop_pages + fodder_pool[shop.index()]).saturating_sub(shop_self)
-    }).sum();
+    // Precompute per-shop aggregates for 仙品 checks
+    let mut shop_pages_sum = [0u32; 5];
+    let mut shop_self_sum = [0u32; 5];
+    for i in 0..n {
+        let si = input.combat_skills[i].shop.index();
+        shop_pages_sum[si] += total_pages[i];
+        shop_self_sum[si] += self_needed[i];
+    }
+    let mut shop_surplus = [0u32; 5];
+    for &shop in &Shop::ALL {
+        let si = shop.index();
+        shop_surplus[si] = (shop_pages_sum[si] + fodder_pool[si]).saturating_sub(shop_self_sum[si]);
+    }
+    let total_surplus: u32 = shop_surplus.iter().sum();
 
     if total_surplus < total_other {
         return false;
     }
 
     // Per-skill 仙品 check: skill i can't use its OWN surplus as its own 仙品.
-    // Available 仙品 for skill i = total_surplus - skill_i's own surplus.
+    // Recompute i's shop surplus EXCLUDING skill i, to get the true available.
+    // (Naive "total_surplus - own_surplus" overcounts when intra-shop conversions
+    // consume part of the individual surplus.)
     for i in 0..n {
-        if self_needed[i] == 0 { continue; } // no upgrades needed
+        if self_needed[i] == 0 { continue; }
         let s = &input.combat_skills[i];
-        let cost = total_cost_between(
-            s.current_level,
-            s.target_level,
-            s.realm,
-            s.skill_class,
-        );
-        let own_surplus = total_pages[i].saturating_sub(self_needed[i]);
-        let available_for_i = total_surplus.saturating_sub(own_surplus);
+        let cost = total_cost_between(s.current_level, s.target_level, s.realm, s.skill_class);
+        let si = s.shop.index();
+
+        let shop_surplus_without_i = (shop_pages_sum[si] - total_pages[i] + fodder_pool[si])
+            .saturating_sub(shop_self_sum[si] - self_needed[i]);
+        let available_for_i = (total_surplus - shop_surplus[si]) + shop_surplus_without_i;
+
         if available_for_i < cost.other_pages {
             return false;
         }
@@ -347,12 +351,19 @@ fn do_conversions_and_upgrades(
             if !any { break; }
         }
 
-        // Try one conversion for the most urgent skill needing 本体
+        // Try one conversion for the skill closest to its next upgrade
         if free_left == 0 && state.stones == 0 { break; }
         let mut candidates: Vec<usize> = (0..n)
             .filter(|&i| state.levels[i] < state.targets[i] && state.self_remaining_need(i) > 0)
             .collect();
-        candidates.sort_by_key(|&i| state.targets[i].index() as i32 - state.levels[i].index() as i32);
+        // Prioritize by how few pages are still needed for the NEXT level-up
+        // (smallest deficit = one conversion has maximum impact)
+        candidates.sort_by_key(|&i| {
+            let next = state.levels[i].next().unwrap();
+            let costs = upgrade_costs_for_category(cost_category(state.realms[i], state.skill_classes[i]));
+            let self_for_next = costs.get(next.index() - 1).map_or(0, |c| c.self_pages);
+            self_for_next.saturating_sub(state.pages[i])
+        });
 
         let mut converted = false;
         for &i in &candidates {
