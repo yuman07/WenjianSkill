@@ -458,8 +458,6 @@ fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekP
 // ============================================================
 
 pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
-    let n = input.combat_skills.len();
-
     let min_weeks = match find_minimum_weeks(input) {
         Some(w) => w,
         None => {
