@@ -52,7 +52,7 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
         let s = &input.combat_skills[i];
         total_pages[i] = s.remaining_pages + skill_income_pages(s, weeks);
         if s.current_level < s.target_level {
-            let cost = total_cost_between(s.current_level, s.target_level);
+            let cost = total_cost_between(s.current_level, s.target_level, s.realm, s.skill_class);
             self_needed[i] = cost.self_pages;
             total_other += cost.other_pages;
             total_purple += cost.purple_pages;
@@ -121,9 +121,12 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
     // Available 仙品 for skill i = total_surplus - skill_i's own surplus.
     for i in 0..n {
         if self_needed[i] == 0 { continue; } // no upgrades needed
+        let s = &input.combat_skills[i];
         let cost = total_cost_between(
-            input.combat_skills[i].current_level,
-            input.combat_skills[i].target_level,
+            s.current_level,
+            s.target_level,
+            s.realm,
+            s.skill_class,
         );
         let own_surplus = total_pages[i].saturating_sub(self_needed[i]);
         let available_for_i = total_surplus.saturating_sub(own_surplus);
@@ -179,6 +182,8 @@ struct SimState {
     levels: Vec<SkillLevel>,
     pages: Vec<u32>,
     shops: Vec<Shop>,
+    realms: Vec<Realm>,
+    skill_classes: Vec<SkillClass>,
     targets: Vec<SkillLevel>,
     fodder_pools: [u32; 5], // per-shop fodder pool
     purple: u32,
@@ -193,6 +198,8 @@ impl SimState {
             levels: input.combat_skills.iter().map(|s| s.current_level).collect(),
             pages: input.combat_skills.iter().map(|s| s.remaining_pages).collect(),
             shops: input.combat_skills.iter().map(|s| s.shop).collect(),
+            realms: input.combat_skills.iter().map(|s| s.realm).collect(),
+            skill_classes: input.combat_skills.iter().map(|s| s.skill_class).collect(),
             targets: targets.to_vec(),
             fodder_pools: {
                 let mut p = [0u32; 5];
@@ -224,7 +231,7 @@ impl SimState {
 
     fn self_remaining_need(&self, i: usize) -> u32 {
         if self.levels[i] >= self.targets[i] { return 0; }
-        let cost = total_cost_between(self.levels[i], self.targets[i]);
+        let cost = total_cost_between(self.levels[i], self.targets[i], self.realms[i], self.skill_classes[i]);
         cost.self_pages.saturating_sub(self.pages[i])
     }
 
@@ -233,7 +240,7 @@ impl SimState {
         if self.levels[i] >= self.targets[i] {
             return self.pages[i]; // All pages are surplus
         }
-        let cost = total_cost_between(self.levels[i], self.targets[i]);
+        let cost = total_cost_between(self.levels[i], self.targets[i], self.realms[i], self.skill_classes[i]);
         self.pages[i].saturating_sub(cost.self_pages)
     }
 
@@ -241,7 +248,10 @@ impl SimState {
     fn try_upgrade(&mut self, i: usize, n: usize) -> Option<UpgradeAction> {
         if self.levels[i] >= self.targets[i] { return None; }
         let next = self.levels[i].next()?;
-        let cost = &UPGRADE_COSTS[next.index()];
+        let costs = upgrade_costs_for_category(cost_category(self.realms[i], self.skill_classes[i]));
+        let cost_idx = next.index() - 1; // cost table: 0 = 1星→2星
+        if cost_idx >= costs.len() { return None; }
+        let cost = &costs[cost_idx];
         let from = self.levels[i];
 
         if self.pages[i] < cost.self_pages { return None; }
@@ -488,7 +498,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
     let mut total_other_need: u32 = 0;
     for s in &input.combat_skills {
         if s.current_level >= s.target_level { continue; }
-        let cost = total_cost_between(s.current_level, s.target_level);
+        let cost = total_cost_between(s.current_level, s.target_level, s.realm, s.skill_class);
         total_purple_need += cost.purple_pages;
         total_blue_need += cost.blue_pages;
         total_other_need += cost.other_pages;
@@ -526,7 +536,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
         let shop_self: u32 = skills_in_shop.iter().map(|&i| {
             let s = &input.combat_skills[i];
             if s.current_level >= s.target_level { 0 }
-            else { total_cost_between(s.current_level, s.target_level).self_pages }
+            else { total_cost_between(s.current_level, s.target_level, s.realm, s.skill_class).self_pages }
         }).sum();
         if shop_pages + fodder < shop_self {
             reasons.push(format!(
@@ -548,7 +558,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
             .map(|i| {
                 let s = &input.combat_skills[i];
                 if s.current_level >= s.target_level { 0 }
-                else { total_cost_between(s.current_level, s.target_level).self_pages }
+                else { total_cost_between(s.current_level, s.target_level, s.realm, s.skill_class).self_pages }
             }).sum();
         let fodder = adv.fodder_income.total_pages(shop, MAX_WEEKS);
         (sp + fodder).saturating_sub(ss)

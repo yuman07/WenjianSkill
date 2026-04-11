@@ -20,6 +20,8 @@ export function skillDisplayName(s: CombatSkillInput): string {
 
 /** 发给 Rust 后端的输入 */
 export interface PlannerBackendSkill {
+  realm: Realm;
+  skillClass: SkillClass;
   shop: Shop;
   currentLevel: SkillLevel;
   remainingPages: number;

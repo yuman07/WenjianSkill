@@ -1,4 +1,5 @@
-import { REALMS, SKILL_LEVELS, classesForRealm, shopsForClass, defaultIncomeForShop } from "../types/game";
+import { REALMS, classesForRealm, shopsForClass, defaultIncomeForShop, availableLevels } from "../types/game";
+import type { Realm, SkillClass, SkillLevel } from "../types/game";
 import type { CombatSkillInput } from "../types/planner";
 
 interface Props {
@@ -10,6 +11,13 @@ interface Props {
 export default function SkillCard({ index, skill, onChange }: Props) {
   const availableClasses = classesForRealm(skill.realm);
   const availableShops = shopsForClass(skill.skillClass);
+  const levels = availableLevels(skill.realm, skill.skillClass);
+
+  /** Clamp a level to the available levels for a given realm+class */
+  const clampLevel = (level: SkillLevel, realm: Realm, cls: SkillClass): SkillLevel => {
+    const lvls = availableLevels(realm, cls);
+    return lvls.includes(level) ? level : lvls[lvls.length - 1];
+  };
 
   const handleRealmChange = (realm: typeof skill.realm) => {
     const classes = classesForRealm(realm);
@@ -17,14 +25,18 @@ export default function SkillCard({ index, skill, onChange }: Props) {
     const shops = shopsForClass(cls);
     const shop = shops.includes(skill.shop) ? skill.shop : shops[0];
     const income = defaultIncomeForShop(shop);
-    onChange({ ...skill, realm, skillClass: cls, shop, incomeCycleWeeks: income.cycleWeeks, incomeBatchCount: income.batchCount });
+    const currentLevel = clampLevel(skill.currentLevel, realm, cls);
+    const targetLevel = clampLevel(skill.targetLevel, realm, cls);
+    onChange({ ...skill, realm, skillClass: cls, shop, currentLevel, targetLevel, incomeCycleWeeks: income.cycleWeeks, incomeBatchCount: income.batchCount });
   };
 
   const handleClassChange = (cls: typeof skill.skillClass) => {
     const shops = shopsForClass(cls);
     const shop = shops.includes(skill.shop) ? skill.shop : shops[0];
     const income = defaultIncomeForShop(shop);
-    onChange({ ...skill, skillClass: cls, shop, incomeCycleWeeks: income.cycleWeeks, incomeBatchCount: income.batchCount });
+    const currentLevel = clampLevel(skill.currentLevel, skill.realm, cls);
+    const targetLevel = clampLevel(skill.targetLevel, skill.realm, cls);
+    onChange({ ...skill, skillClass: cls, shop, currentLevel, targetLevel, incomeCycleWeeks: income.cycleWeeks, incomeBatchCount: income.batchCount });
   };
 
   const handleShopChange = (shop: typeof skill.shop) => {
@@ -61,7 +73,7 @@ export default function SkillCard({ index, skill, onChange }: Props) {
         <div>
           <label className="block text-xs text-gray-500 mb-1">当前等级</label>
           <select value={skill.currentLevel} onChange={(e) => onChange({ ...skill, currentLevel: e.target.value as typeof skill.currentLevel })} className={inputCls}>
-            {SKILL_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+            {levels.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
         <div>
@@ -73,7 +85,7 @@ export default function SkillCard({ index, skill, onChange }: Props) {
         <div>
           <label className="block text-xs text-gray-500 mb-1">目标等级</label>
           <select value={skill.targetLevel} onChange={(e) => onChange({ ...skill, targetLevel: e.target.value as typeof skill.targetLevel })} className={inputCls}>
-            {SKILL_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+            {levels.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
       </div>

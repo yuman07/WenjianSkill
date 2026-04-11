@@ -1,6 +1,60 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Realm {
+    #[serde(rename = "人界一")]
+    RenJie1,
+    #[serde(rename = "人界二")]
+    RenJie2,
+    #[serde(rename = "返虚")]
+    FanXu,
+    #[serde(rename = "合体")]
+    HeTi,
+    #[serde(rename = "大乘")]
+    DaCheng,
+    #[serde(rename = "渡劫")]
+    DuJie,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum SkillClass {
+    #[serde(rename = "剑")]
+    Jian,
+    #[serde(rename = "火")]
+    Huo,
+    #[serde(rename = "雷")]
+    Lei,
+    #[serde(rename = "百族")]
+    BaiZu,
+}
+
+impl SkillClass {
+    pub fn is_triple(self) -> bool {
+        matches!(self, SkillClass::Jian | SkillClass::Huo | SkillClass::Lei)
+    }
+}
+
+/// 消耗分类（由境界+职业决定）
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CostCategory {
+    RenjieTriple,
+    FanxuTriple,
+    FanxuBaizu,
+    HetiTriple,
+    HetiBaizu,
+}
+
+pub fn cost_category(realm: Realm, skill_class: SkillClass) -> CostCategory {
+    match (realm, skill_class.is_triple()) {
+        (Realm::RenJie1 | Realm::RenJie2, _) => CostCategory::RenjieTriple,
+        (Realm::FanXu, true)  => CostCategory::FanxuTriple,
+        (Realm::FanXu, false) => CostCategory::FanxuBaizu,
+        (Realm::HeTi | Realm::DaCheng | Realm::DuJie, true)  => CostCategory::HetiTriple,
+        (Realm::HeTi | Realm::DaCheng | Realm::DuJie, false) => CostCategory::HetiBaizu,
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Shop {
     #[serde(rename = "论剑")]
     LunJian,
@@ -137,11 +191,56 @@ pub struct UpgradeCost {
     pub blue_pages: u32,
 }
 
-/// 升级消耗表，索引 0 = 获取(1星), 索引 1 = 1星→2星, ..., 索引 13 = 天4→天5
-pub const UPGRADE_COSTS: [UpgradeCost; 14] = [
-    UpgradeCost { self_pages: 40,  other_pages: 0,   purple_pages: 0,    blue_pages: 0 },
-    UpgradeCost { self_pages: 40,  other_pages: 0,   purple_pages: 100,  blue_pages: 200 },
-    UpgradeCost { self_pages: 0,   other_pages: 120, purple_pages: 100,  blue_pages: 200 },
+/// Table 1: 人界 三系 (人界一/人界二 + 剑/火/雷, max 天3 = 11 levels)
+/// 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
+pub const COSTS_RENJIE_TRIPLE: [UpgradeCost; 11] = [
+    UpgradeCost { self_pages: 40,  other_pages: 0,   purple_pages: 0,   blue_pages: 0 },
+    UpgradeCost { self_pages: 40,  other_pages: 0,   purple_pages: 30,  blue_pages: 100 },
+    UpgradeCost { self_pages: 40,  other_pages: 0,   purple_pages: 60,  blue_pages: 150 },
+    UpgradeCost { self_pages: 40,  other_pages: 40,  purple_pages: 60,  blue_pages: 150 },
+    UpgradeCost { self_pages: 40,  other_pages: 40,  purple_pages: 90,  blue_pages: 220 },
+    UpgradeCost { self_pages: 40,  other_pages: 40,  purple_pages: 90,  blue_pages: 220 },
+    UpgradeCost { self_pages: 40,  other_pages: 40,  purple_pages: 90,  blue_pages: 220 },
+    UpgradeCost { self_pages: 80,  other_pages: 80,  purple_pages: 200, blue_pages: 500 },
+    UpgradeCost { self_pages: 80,  other_pages: 80,  purple_pages: 200, blue_pages: 500 },
+    UpgradeCost { self_pages: 120, other_pages: 120, purple_pages: 300, blue_pages: 750 },
+    UpgradeCost { self_pages: 120, other_pages: 120, purple_pages: 300, blue_pages: 750 },
+];
+
+/// Table 2: 返虚 三系 (返虚 + 剑/火/雷, max 天3 = 11 levels)
+pub const COSTS_FANXU_TRIPLE: [UpgradeCost; 11] = [
+    UpgradeCost { self_pages: 0,   other_pages: 80,  purple_pages: 100,  blue_pages: 200 },
+    UpgradeCost { self_pages: 0,   other_pages: 80,  purple_pages: 100,  blue_pages: 200 },
+    UpgradeCost { self_pages: 40,  other_pages: 80,  purple_pages: 150,  blue_pages: 350 },
+    UpgradeCost { self_pages: 80,  other_pages: 80,  purple_pages: 200,  blue_pages: 500 },
+    UpgradeCost { self_pages: 80,  other_pages: 120, purple_pages: 250,  blue_pages: 650 },
+    UpgradeCost { self_pages: 80,  other_pages: 160, purple_pages: 350,  blue_pages: 900 },
+    UpgradeCost { self_pages: 120, other_pages: 200, purple_pages: 500,  blue_pages: 1200 },
+    UpgradeCost { self_pages: 160, other_pages: 240, purple_pages: 600,  blue_pages: 1500 },
+    UpgradeCost { self_pages: 200, other_pages: 320, purple_pages: 700,  blue_pages: 1800 },
+    UpgradeCost { self_pages: 240, other_pages: 400, purple_pages: 800,  blue_pages: 2100 },
+    UpgradeCost { self_pages: 280, other_pages: 480, purple_pages: 1000, blue_pages: 2400 },
+];
+
+/// Table 3: 返虚 百族 (返虚 + 百族, max 天3 = 11 levels)
+pub const COSTS_FANXU_BAIZU: [UpgradeCost; 11] = [
+    UpgradeCost { self_pages: 0,   other_pages: 120, purple_pages: 100,  blue_pages: 300 },
+    UpgradeCost { self_pages: 0,   other_pages: 120, purple_pages: 150,  blue_pages: 350 },
+    UpgradeCost { self_pages: 40,  other_pages: 160, purple_pages: 250,  blue_pages: 600 },
+    UpgradeCost { self_pages: 80,  other_pages: 160, purple_pages: 300,  blue_pages: 800 },
+    UpgradeCost { self_pages: 80,  other_pages: 240, purple_pages: 450,  blue_pages: 1100 },
+    UpgradeCost { self_pages: 80,  other_pages: 320, purple_pages: 500,  blue_pages: 1300 },
+    UpgradeCost { self_pages: 120, other_pages: 400, purple_pages: 600,  blue_pages: 1600 },
+    UpgradeCost { self_pages: 160, other_pages: 480, purple_pages: 750,  blue_pages: 1900 },
+    UpgradeCost { self_pages: 200, other_pages: 560, purple_pages: 900,  blue_pages: 2200 },
+    UpgradeCost { self_pages: 240, other_pages: 640, purple_pages: 1000, blue_pages: 2500 },
+    UpgradeCost { self_pages: 280, other_pages: 720, purple_pages: 1200, blue_pages: 2800 },
+];
+
+/// Table 4: 合体/大乘/渡劫 三系 (合体/大乘/渡劫 + 剑/火/雷, max 天5 = 13 levels)
+pub const COSTS_HETI_TRIPLE: [UpgradeCost; 13] = [
+    UpgradeCost { self_pages: 40,  other_pages: 120, purple_pages: 100,  blue_pages: 200 },
+    UpgradeCost { self_pages: 40,  other_pages: 120, purple_pages: 100,  blue_pages: 200 },
     UpgradeCost { self_pages: 40,  other_pages: 120, purple_pages: 150,  blue_pages: 350 },
     UpgradeCost { self_pages: 80,  other_pages: 120, purple_pages: 200,  blue_pages: 500 },
     UpgradeCost { self_pages: 80,  other_pages: 160, purple_pages: 250,  blue_pages: 650 },
@@ -155,8 +254,43 @@ pub const UPGRADE_COSTS: [UpgradeCost; 14] = [
     UpgradeCost { self_pages: 360, other_pages: 680, purple_pages: 1000, blue_pages: 2400 },
 ];
 
-/// 计算从 from_level 升到 to_level 所需总材料
-pub fn total_cost_between(from: SkillLevel, to: SkillLevel) -> UpgradeCost {
+/// Table 5: 合体/大乘 百族 (合体/大乘 + 百族, max 天3 = 11 levels)
+pub const COSTS_HETI_BAIZU: [UpgradeCost; 11] = [
+    UpgradeCost { self_pages: 0,   other_pages: 160, purple_pages: 100,  blue_pages: 300 },
+    UpgradeCost { self_pages: 0,   other_pages: 160, purple_pages: 150,  blue_pages: 350 },
+    UpgradeCost { self_pages: 40,  other_pages: 200, purple_pages: 250,  blue_pages: 600 },
+    UpgradeCost { self_pages: 80,  other_pages: 200, purple_pages: 300,  blue_pages: 800 },
+    UpgradeCost { self_pages: 80,  other_pages: 280, purple_pages: 450,  blue_pages: 1100 },
+    UpgradeCost { self_pages: 80,  other_pages: 360, purple_pages: 500,  blue_pages: 1300 },
+    UpgradeCost { self_pages: 120, other_pages: 440, purple_pages: 600,  blue_pages: 1600 },
+    UpgradeCost { self_pages: 160, other_pages: 520, purple_pages: 750,  blue_pages: 1900 },
+    UpgradeCost { self_pages: 200, other_pages: 600, purple_pages: 900,  blue_pages: 2200 },
+    UpgradeCost { self_pages: 240, other_pages: 680, purple_pages: 1000, blue_pages: 2500 },
+    UpgradeCost { self_pages: 280, other_pages: 760, purple_pages: 1200, blue_pages: 2800 },
+];
+
+/// 根据分类获取消耗表
+pub fn upgrade_costs_for_category(cat: CostCategory) -> &'static [UpgradeCost] {
+    match cat {
+        CostCategory::RenjieTriple => &COSTS_RENJIE_TRIPLE,
+        CostCategory::FanxuTriple  => &COSTS_FANXU_TRIPLE,
+        CostCategory::FanxuBaizu   => &COSTS_FANXU_BAIZU,
+        CostCategory::HetiTriple   => &COSTS_HETI_TRIPLE,
+        CostCategory::HetiBaizu    => &COSTS_HETI_BAIZU,
+    }
+}
+
+/// 根据境界+职业获取最大等级
+pub fn max_level(realm: Realm, skill_class: SkillClass) -> SkillLevel {
+    match cost_category(realm, skill_class) {
+        CostCategory::HetiTriple => SkillLevel::Tian5,
+        _ => SkillLevel::Tian3,
+    }
+}
+
+/// 计算从 from_level 升到 to_level 所需总材料（根据境界+职业选择消耗表）
+pub fn total_cost_between(from: SkillLevel, to: SkillLevel, realm: Realm, skill_class: SkillClass) -> UpgradeCost {
+    let costs = upgrade_costs_for_category(cost_category(realm, skill_class));
     let fi = from.index();
     let ti = to.index();
     let mut result = UpgradeCost {
@@ -165,11 +299,15 @@ pub fn total_cost_between(from: SkillLevel, to: SkillLevel) -> UpgradeCost {
         purple_pages: 0,
         blue_pages: 0,
     };
+    // costs[0] = 1星→2星 corresponds to SkillLevel index 1
+    // So cost table index = SkillLevel index - 1
     for i in (fi + 1)..=ti {
-        result.self_pages += UPGRADE_COSTS[i].self_pages;
-        result.other_pages += UPGRADE_COSTS[i].other_pages;
-        result.purple_pages += UPGRADE_COSTS[i].purple_pages;
-        result.blue_pages += UPGRADE_COSTS[i].blue_pages;
+        let cost_idx = i - 1; // 0-based into cost table
+        if cost_idx >= costs.len() { break; }
+        result.self_pages += costs[cost_idx].self_pages;
+        result.other_pages += costs[cost_idx].other_pages;
+        result.purple_pages += costs[cost_idx].purple_pages;
+        result.blue_pages += costs[cost_idx].blue_pages;
     }
     result
 }
@@ -178,6 +316,9 @@ pub fn total_cost_between(from: SkillLevel, to: SkillLevel) -> UpgradeCost {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CombatSkillInput {
+    pub realm: Realm,
+    #[serde(rename = "skillClass")]
+    pub skill_class: SkillClass,
     pub shop: Shop,
     #[serde(rename = "currentLevel")]
     pub current_level: SkillLevel,

@@ -73,14 +73,89 @@ export interface UpgradeCost {
   bluePages: number;   // 蓝色书页
 }
 
+/** 消耗分类（由境界+职业决定） */
+export type CostCategory =
+  | "renjie_triple"
+  | "fanxu_triple"
+  | "fanxu_baizu"
+  | "heti_triple"
+  | "heti_baizu";
+
+/** 根据境界+职业确定消耗分类 */
+export function getCostCategory(realm: Realm, cls: SkillClass): CostCategory {
+  const isTriple = cls === "剑" || cls === "火" || cls === "雷";
+  if (realm === "人界一" || realm === "人界二") {
+    return "renjie_triple"; // 人界只有三系
+  }
+  if (realm === "返虚") {
+    return isTriple ? "fanxu_triple" : "fanxu_baizu";
+  }
+  // 合体/大乘/渡劫
+  if (isTriple) return "heti_triple";
+  return "heti_baizu"; // 渡劫没有百族，但防御性处理
+}
+
 /**
- * 升级消耗表
- * 索引 0 = 获取（1星），索引 1 = 1星→2星，...，索引 13 = 天4→天5
+ * Table 1: 人界 三系 (人界一/人界二 + 剑/火/雷, max 天3 = 11 levels)
+ * 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
  */
-export const UPGRADE_COSTS: UpgradeCost[] = [
-  { selfPages: 40,  otherPages: 0,   purplePages: 0,    bluePages: 0 },
-  { selfPages: 40,  otherPages: 0,   purplePages: 100,  bluePages: 200 },
-  { selfPages: 0,   otherPages: 120, purplePages: 100,  bluePages: 200 },
+const COSTS_RENJIE_TRIPLE: UpgradeCost[] = [
+  { selfPages: 40,  otherPages: 0,   purplePages: 0,   bluePages: 0 },
+  { selfPages: 40,  otherPages: 0,   purplePages: 30,  bluePages: 100 },
+  { selfPages: 40,  otherPages: 0,   purplePages: 60,  bluePages: 150 },
+  { selfPages: 40,  otherPages: 40,  purplePages: 60,  bluePages: 150 },
+  { selfPages: 40,  otherPages: 40,  purplePages: 90,  bluePages: 220 },
+  { selfPages: 40,  otherPages: 40,  purplePages: 90,  bluePages: 220 },
+  { selfPages: 40,  otherPages: 40,  purplePages: 90,  bluePages: 220 },
+  { selfPages: 80,  otherPages: 80,  purplePages: 200, bluePages: 500 },
+  { selfPages: 80,  otherPages: 80,  purplePages: 200, bluePages: 500 },
+  { selfPages: 120, otherPages: 120, purplePages: 300, bluePages: 750 },
+  { selfPages: 120, otherPages: 120, purplePages: 300, bluePages: 750 },
+];
+
+/**
+ * Table 2: 返虚 三系 (返虚 + 剑/火/雷, max 天3 = 11 levels)
+ * 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
+ */
+const COSTS_FANXU_TRIPLE: UpgradeCost[] = [
+  { selfPages: 0,   otherPages: 80,  purplePages: 100,  bluePages: 200 },
+  { selfPages: 0,   otherPages: 80,  purplePages: 100,  bluePages: 200 },
+  { selfPages: 40,  otherPages: 80,  purplePages: 150,  bluePages: 350 },
+  { selfPages: 80,  otherPages: 80,  purplePages: 200,  bluePages: 500 },
+  { selfPages: 80,  otherPages: 120, purplePages: 250,  bluePages: 650 },
+  { selfPages: 80,  otherPages: 160, purplePages: 350,  bluePages: 900 },
+  { selfPages: 120, otherPages: 200, purplePages: 500,  bluePages: 1200 },
+  { selfPages: 160, otherPages: 240, purplePages: 600,  bluePages: 1500 },
+  { selfPages: 200, otherPages: 320, purplePages: 700,  bluePages: 1800 },
+  { selfPages: 240, otherPages: 400, purplePages: 800,  bluePages: 2100 },
+  { selfPages: 280, otherPages: 480, purplePages: 1000, bluePages: 2400 },
+];
+
+/**
+ * Table 3: 返虚 百族 (返虚 + 百族, max 天3 = 11 levels)
+ * 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
+ */
+const COSTS_FANXU_BAIZU: UpgradeCost[] = [
+  { selfPages: 0,   otherPages: 120, purplePages: 100,  bluePages: 300 },
+  { selfPages: 0,   otherPages: 120, purplePages: 150,  bluePages: 350 },
+  { selfPages: 40,  otherPages: 160, purplePages: 250,  bluePages: 600 },
+  { selfPages: 80,  otherPages: 160, purplePages: 300,  bluePages: 800 },
+  { selfPages: 80,  otherPages: 240, purplePages: 450,  bluePages: 1100 },
+  { selfPages: 80,  otherPages: 320, purplePages: 500,  bluePages: 1300 },
+  { selfPages: 120, otherPages: 400, purplePages: 600,  bluePages: 1600 },
+  { selfPages: 160, otherPages: 480, purplePages: 750,  bluePages: 1900 },
+  { selfPages: 200, otherPages: 560, purplePages: 900,  bluePages: 2200 },
+  { selfPages: 240, otherPages: 640, purplePages: 1000, bluePages: 2500 },
+  { selfPages: 280, otherPages: 720, purplePages: 1200, bluePages: 2800 },
+];
+
+/**
+ * Table 4: 合体/大乘/渡劫 三系 (合体/大乘/渡劫 + 剑/火/雷, max 天5 = 13 levels)
+ * 索引 0 = 1星→2星, ..., 索引 12 = 天4→天5
+ */
+const COSTS_HETI_TRIPLE: UpgradeCost[] = [
+  { selfPages: 40,  otherPages: 120, purplePages: 100,  bluePages: 200 },
+  { selfPages: 40,  otherPages: 120, purplePages: 100,  bluePages: 200 },
   { selfPages: 40,  otherPages: 120, purplePages: 150,  bluePages: 350 },
   { selfPages: 80,  otherPages: 120, purplePages: 200,  bluePages: 500 },
   { selfPages: 80,  otherPages: 160, purplePages: 250,  bluePages: 650 },
@@ -94,16 +169,67 @@ export const UPGRADE_COSTS: UpgradeCost[] = [
   { selfPages: 360, otherPages: 680, purplePages: 1000, bluePages: 2400 },
 ];
 
+/**
+ * Table 5: 合体/大乘 百族 (合体/大乘 + 百族, max 天3 = 11 levels)
+ * 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
+ */
+const COSTS_HETI_BAIZU: UpgradeCost[] = [
+  { selfPages: 0,   otherPages: 160, purplePages: 100,  bluePages: 300 },
+  { selfPages: 0,   otherPages: 160, purplePages: 150,  bluePages: 350 },
+  { selfPages: 40,  otherPages: 200, purplePages: 250,  bluePages: 600 },
+  { selfPages: 80,  otherPages: 200, purplePages: 300,  bluePages: 800 },
+  { selfPages: 80,  otherPages: 280, purplePages: 450,  bluePages: 1100 },
+  { selfPages: 80,  otherPages: 360, purplePages: 500,  bluePages: 1300 },
+  { selfPages: 120, otherPages: 440, purplePages: 600,  bluePages: 1600 },
+  { selfPages: 160, otherPages: 520, purplePages: 750,  bluePages: 1900 },
+  { selfPages: 200, otherPages: 600, purplePages: 900,  bluePages: 2200 },
+  { selfPages: 240, otherPages: 680, purplePages: 1000, bluePages: 2500 },
+  { selfPages: 280, otherPages: 760, purplePages: 1200, bluePages: 2800 },
+];
+
+/** 根据分类获取消耗表 */
+export function getUpgradeCosts(cat: CostCategory): UpgradeCost[] {
+  switch (cat) {
+    case "renjie_triple": return COSTS_RENJIE_TRIPLE;
+    case "fanxu_triple":  return COSTS_FANXU_TRIPLE;
+    case "fanxu_baizu":   return COSTS_FANXU_BAIZU;
+    case "heti_triple":   return COSTS_HETI_TRIPLE;
+    case "heti_baizu":    return COSTS_HETI_BAIZU;
+  }
+}
+
+/** 根据分类获取最大等级 */
+export function maxLevelForCategory(cat: CostCategory): SkillLevel {
+  return cat === "heti_triple" ? "天5" : "天3";
+}
+
+/** 根据境界+职业获取最大等级 */
+export function maxLevel(realm: Realm, cls: SkillClass): SkillLevel {
+  return maxLevelForCategory(getCostCategory(realm, cls));
+}
+
+/** 根据境界+职业返回可用等级列表（1星 到 maxLevel） */
+export function availableLevels(realm: Realm, cls: SkillClass): SkillLevel[] {
+  const max = maxLevel(realm, cls);
+  const maxIdx = SKILL_LEVELS.indexOf(max);
+  return SKILL_LEVELS.slice(0, maxIdx + 1);
+}
+
 /** 计算从 fromLevel 升到 toLevel 所需的总材料 */
-export function totalCostBetween(from: SkillLevel, to: SkillLevel): UpgradeCost {
+export function totalCostBetween(from: SkillLevel, to: SkillLevel, realm: Realm, cls: SkillClass): UpgradeCost {
+  const costs = getUpgradeCosts(getCostCategory(realm, cls));
   const fromIdx = SKILL_LEVELS.indexOf(from);
   const toIdx = SKILL_LEVELS.indexOf(to);
   const result: UpgradeCost = { selfPages: 0, otherPages: 0, purplePages: 0, bluePages: 0 };
+  // costs[0] = 1星→2星 corresponds to fromIdx=0(1星) → toIdx=1(2星), i.e. SKILL_LEVELS index 1
+  // So cost table index = SKILL_LEVELS index - 1
   for (let i = fromIdx + 1; i <= toIdx; i++) {
-    result.selfPages += UPGRADE_COSTS[i].selfPages;
-    result.otherPages += UPGRADE_COSTS[i].otherPages;
-    result.purplePages += UPGRADE_COSTS[i].purplePages;
-    result.bluePages += UPGRADE_COSTS[i].bluePages;
+    const costIdx = i - 1; // cost table index: 0 = 1星→2星
+    if (costIdx < 0 || costIdx >= costs.length) break;
+    result.selfPages += costs[costIdx].selfPages;
+    result.otherPages += costs[costIdx].otherPages;
+    result.purplePages += costs[costIdx].purplePages;
+    result.bluePages += costs[costIdx].bluePages;
   }
   return result;
 }

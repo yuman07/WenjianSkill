@@ -38,6 +38,8 @@ export default function App() {
 
     const input: PlannerInput = {
       combatSkills: skills.map((s) => ({
+        realm: s.realm,
+        skillClass: s.skillClass,
         shop: s.shop,
         currentLevel: s.currentLevel,
         remainingPages: s.remainingPages,
