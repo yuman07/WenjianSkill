@@ -311,37 +311,30 @@ impl SimState {
     }
 }
 
-fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekPlan {
+/// Interleave conversions and upgrades until no more progress.
+/// `free_conv` is the number of free conversions available this cycle.
+fn do_conversions_and_upgrades(
+    state: &mut SimState,
+    free_conv: u32,
+    conversions: &mut Vec<ConversionAction>,
+    upgrades: &mut Vec<UpgradeAction>,
+) {
     let n = state.levels.len();
-    let mut incomes = Vec::new();
-    let mut conversions = Vec::new();
-    let mut upgrades = Vec::new();
-
-    // Step 1: Income (combat skills + fodder pools + purple/blue)
-    state.purple += input.advanced.weekly_purple_income;
-    state.blue += input.advanced.weekly_blue_income;
-    for i in 0..n {
-        let pages = skill_gets_income(&input.combat_skills[i], week);
-        if pages > 0 {
-            state.pages[i] += pages;
-            incomes.push(SkillIncome { skill_index: i, pages });
-        }
-    }
-    for &shop in &Shop::ALL {
-        let pages = input.advanced.fodder_income.pages_in_week(shop, week);
-        if pages > 0 {
-            state.fodder_pools[shop.index()] += pages;
-        }
-    }
-
-    // Step 2 & 3: Interleave conversions and upgrades
-    let mut free_left = state.free_conv;
+    let mut free_left = free_conv;
     loop {
-        // Try upgrading
+        // Try upgrading all possible
+        // Priority: (1) upgrades needing less 仙品 first (avoid competing for shared resource),
+        //           (2) among equal 仙品 cost, smaller gap first (finish sooner → free surplus)
         let mut upgraded = false;
         loop {
             let mut order: Vec<usize> = (0..n).filter(|&i| state.levels[i] < state.targets[i]).collect();
-            order.sort_by_key(|&i| state.targets[i].index() as i32 - state.levels[i].index() as i32);
+            order.sort_by_key(|&i| {
+                let next = state.levels[i].next().unwrap();
+                let costs = upgrade_costs_for_category(cost_category(state.realms[i], state.skill_classes[i]));
+                let other_cost = costs.get(next.index() - 1).map_or(0, |c| c.other_pages);
+                let gap = state.targets[i].index() as i32 - state.levels[i].index() as i32;
+                (other_cost, gap)
+            });
             let mut any = false;
             for i in order {
                 if let Some(action) = state.try_upgrade(i, n) {
@@ -422,6 +415,34 @@ fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekP
         if !converted && !upgraded { break; }
         if !converted { break; }
     }
+}
+
+fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekPlan {
+    let n = state.levels.len();
+    let mut incomes = Vec::new();
+    let mut conversions = Vec::new();
+    let mut upgrades = Vec::new();
+
+    // Step 1: Income (combat skills + fodder pools + purple/blue)
+    state.purple += input.advanced.weekly_purple_income;
+    state.blue += input.advanced.weekly_blue_income;
+    for i in 0..n {
+        let pages = skill_gets_income(&input.combat_skills[i], week);
+        if pages > 0 {
+            state.pages[i] += pages;
+            incomes.push(SkillIncome { skill_index: i, pages });
+        }
+    }
+    for &shop in &Shop::ALL {
+        let pages = input.advanced.fodder_income.pages_in_week(shop, week);
+        if pages > 0 {
+            state.fodder_pools[shop.index()] += pages;
+        }
+    }
+
+    // Step 2 & 3: Interleave conversions and upgrades
+    let free_conv = state.free_conv;
+    do_conversions_and_upgrades(state, free_conv, &mut conversions, &mut upgrades);
 
     WeekPlan {
         week,
@@ -455,22 +476,16 @@ pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
     let mut state = SimState::from_input(input, &final_targets);
     let mut weeks = Vec::new();
 
-    // Week 0: upgrades with initial resources
+    // Week 0: conversions + upgrades with initial resources
     {
-        let mut w0 = Vec::new();
-        loop {
-            let mut order: Vec<usize> = (0..n).filter(|&i| state.levels[i] < state.targets[i]).collect();
-            order.sort_by_key(|&i| state.targets[i].index() as i32 - state.levels[i].index() as i32);
-            let mut any = false;
-            for i in order {
-                if let Some(a) = state.try_upgrade(i, n) { w0.push(a); any = true; break; }
-            }
-            if !any { break; }
-        }
-        if !w0.is_empty() {
+        let mut conversions = Vec::new();
+        let mut upgrades = Vec::new();
+        let free_conv = state.free_conv;
+        do_conversions_and_upgrades(&mut state, free_conv, &mut conversions, &mut upgrades);
+        if !conversions.is_empty() || !upgrades.is_empty() {
             weeks.push(WeekPlan {
-                week: 0, incomes: Vec::new(), conversions: Vec::new(),
-                upgrades: w0, snapshot: state.snapshot(),
+                week: 0, incomes: Vec::new(), conversions, upgrades,
+                snapshot: state.snapshot(),
             });
         }
     }
