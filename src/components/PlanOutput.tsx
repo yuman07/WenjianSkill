@@ -4,6 +4,7 @@ import { writeTextFile } from "@tauri-apps/plugin-fs";
 import type { PlannerOutput, WeekPlan, CombatSkillInput } from "../types/planner";
 import { skillDisplayName } from "../types/planner";
 import { generatePlanText } from "../utils/exportText";
+import { formatDonors } from "../utils/donorLabel";
 
 interface Props {
   output: PlannerOutput;
@@ -85,7 +86,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                     : "操作"}：升级神通
                 </div>
                 {week.upgrades.map((u, i) => {
-                  const donors = Object.entries(u.otherPagesConsumed).filter(([, v]) => (v as number) > 0);
+                  const donorList = formatDonors(u.otherPagesConsumed, skills);
                   return (
                     <div key={i} className="ml-3 mb-2">
                       <div className="text-sm text-gray-800">
@@ -93,14 +94,9 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                         <span className="text-gray-400">{u.fromLevel} → </span>
                         <span className="font-medium text-green-600">{u.toLevel}</span>
                       </div>
-                      <div className="text-xs text-gray-400 mt-0.5">
+                      <div className="text-xs text-gray-400 mt-0.5 leading-relaxed">
                         消耗：本体 {u.selfPagesUsed} 张
-                        {donors.length > 0 && (
-                          <>，狗粮 {donors.map(([key, v]) => {
-                            const label = key.startsWith("pool_") ? "狗粮池" : name(skills, parseInt(key));
-                            return `${label}${v}张`;
-                          }).join("、")}</>
-                        )}
+                        {donorList.length > 0 && <>，仙品：{donorList.join("、")}</>}
                         {u.purplePagesUsed > 0 && <>，紫色 {u.purplePagesUsed}</>}
                         {u.bluePagesUsed > 0 && <>，蓝色 {u.bluePagesUsed}</>}
                       </div>

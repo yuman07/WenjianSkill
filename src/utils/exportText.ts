@@ -1,8 +1,16 @@
 import type { PlannerOutput, WeekPlan, CombatSkillInput } from "../types/planner";
 import { skillDisplayName } from "../types/planner";
+import { formatDonors } from "./donorLabel";
 
 function n(skills: CombatSkillInput[], idx: number): string {
   return skillDisplayName(skills[idx]);
+}
+
+function conversionSource(fromIdx: number, skills: CombatSkillInput[], shop: string): string {
+  if (fromIdx >= skills.length) {
+    return `「${shop}」狗粮池`;
+  }
+  return n(skills, fromIdx);
 }
 
 function divider(): string {
@@ -37,7 +45,8 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
     step++;
     for (const c of week.conversions) {
       const stone = c.usedStone ? "（消耗转换石）" : "";
-      lines.push(`     - 从 ${n(skills, c.fromSkillIndex)} 取 ${c.pages} 张 → ${n(skills, c.targetSkillIndex)}${stone}`);
+      const from = conversionSource(c.fromSkillIndex, skills, c.shop);
+      lines.push(`     - 从 ${from} 取 ${c.pages} 张 → ${n(skills, c.targetSkillIndex)}${stone}`);
     }
     lines.push("");
   }
@@ -46,13 +55,13 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
     lines.push(`  ${step}. 升级神通`);
     for (const u of week.upgrades) {
       lines.push(`     - ${n(skills, u.skillIndex)}: ${u.fromLevel} → ${u.toLevel}`);
-      const costs: string[] = [`本体${u.selfPagesUsed}张`];
-      const donors = Object.entries(u.otherPagesConsumed).filter(([, v]) => (v as number) > 0);
-      if (donors.length > 0) {
-        costs.push(`狗粮: ${donors.map(([idx, v]) => `${n(skills, parseInt(idx))}${v}张`).join("、")}`);
+      const costs: string[] = [`本体 ${u.selfPagesUsed}张`];
+      const donorList = formatDonors(u.otherPagesConsumed, skills);
+      if (donorList.length > 0) {
+        costs.push(`仙品: ${donorList.join("、")}`);
       }
-      if (u.purplePagesUsed > 0) costs.push(`紫色${u.purplePagesUsed}`);
-      if (u.bluePagesUsed > 0) costs.push(`蓝色${u.bluePagesUsed}`);
+      if (u.purplePagesUsed > 0) costs.push(`紫色 ${u.purplePagesUsed}`);
+      if (u.bluePagesUsed > 0) costs.push(`蓝色 ${u.bluePagesUsed}`);
       lines.push(`       消耗: ${costs.join(", ")}`);
     }
     lines.push("");
