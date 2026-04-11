@@ -140,13 +140,9 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
               紫色 {week.snapshot.purplePages} · 蓝色 {week.snapshot.bluePages}
               {week.snapshot.conversionStonesLeft > 0 && ` · 转换石 ${week.snapshot.conversionStonesLeft}`}
             </div>
-            {week.snapshot.fodderPools.some(p => p > 0) && (
-              <div className="mt-1 text-xs text-gray-400">
-                狗粮池：{SHOPS.map((shop, i) =>
-                  week.snapshot.fodderPools[i] > 0 ? `${shop} ${week.snapshot.fodderPools[i]}` : null
-                ).filter(Boolean).join(" · ")}
-              </div>
-            )}
+            <div className="mt-1 text-xs text-gray-400">
+              狗粮池：{SHOPS.map((shop, i) => `${shop} ${week.snapshot.fodderPools[i]}`).join(" · ")}
+            </div>
           </div>
         </div>
       )}

@@ -87,12 +87,7 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
     lines.push(`    ${n(skills, i)}: ${week.snapshot.skillLevels[i]}${extra}`);
   }
   lines.push(`    紫色 ${week.snapshot.purplePages} / 蓝色 ${week.snapshot.bluePages}${week.snapshot.conversionStonesLeft > 0 ? ` / 转换石 ${week.snapshot.conversionStonesLeft}` : ""}`);
-  const fodderEntries = SHOPS.map((shop, i) =>
-    week.snapshot.fodderPools[i] > 0 ? `${shop} ${week.snapshot.fodderPools[i]}` : null
-  ).filter(Boolean);
-  if (fodderEntries.length > 0) {
-    lines.push(`    狗粮池: ${fodderEntries.join(" / ")}`);
-  }
+  lines.push(`    狗粮池: ${SHOPS.map((shop, i) => `${shop} ${week.snapshot.fodderPools[i]}`).join(" / ")}`);
 
   return lines.join("\n");
 }
