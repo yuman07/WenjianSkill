@@ -1,42 +1,234 @@
 use crate::models::*;
 
 const PAGES_PER_UNIT: u32 = 40;
-const DEFAULT_FREE_CONVERSIONS: u32 = 3;
-const MAX_WEEKS: u32 = 200;
+const MAX_WEEKS: u32 = 500;
 
-/// 规划器状态
-struct PlannerState {
+// ============================================================
+// Phase 1: Find minimum weeks via binary search
+// The key insight: for a given W, the optimal allocation is
+// DETERMINISTIC — no search needed.
+//
+// Proof: skill 本体 can only come from its own shop (income or
+// conversion). Directing income to skill is strictly better than
+// pool→conversion (same 本体 gained, no conversion slot used,
+// same 仙品 remaining). Therefore "income to skills first" is
+// always optimal. The remaining allocation follows automatically.
+// ============================================================
+
+/// Per-shop aggregated resource info for a given W
+struct ShopAllocation {
+    /// Total income batches (units of 40) available for this shop over W weeks
+    total_income: u32,
+    /// Sum of 本体 deficit (in units of 40) for all skills in this shop
+    total_skill_deficit: u32,
+    /// Income batches used for skills (min of above two)
+    income_to_skills: u32,
+    /// Conversions needed from pool
+    conversions_needed: u32,
+    /// Total pool available (init + excess income)
+    pool_available: u32,
+    /// Pool remaining as 仙品 after conversions
+    fodder_available: u32,
+}
+
+/// Check if all targets can be met in exactly `weeks` weeks.
+/// Returns None if infeasible, Some(allocation) if feasible.
+fn check_feasibility(input: &PlannerInput, weeks: u32) -> Option<Vec<ShopAllocation>> {
+    let adv = &input.advanced;
+    let n = input.combat_skills.len();
+
+    // Compute total needs per skill
+    let mut skill_self_deficit = vec![0u32; n]; // in pages
+    let mut total_other: u32 = 0;
+    let mut total_purple: u32 = 0;
+    let mut total_blue: u32 = 0;
+
+    for i in 0..n {
+        let s = &input.combat_skills[i];
+        if s.current_level >= s.target_level {
+            continue;
+        }
+        let cost = total_cost_between(s.current_level, s.target_level);
+        skill_self_deficit[i] = cost.self_pages.saturating_sub(s.remaining_pages);
+        total_other += cost.other_pages;
+        total_purple += cost.purple_pages;
+        total_blue += cost.blue_pages;
+    }
+
+    // Check purple/blue (these have no allocation choices)
+    let avail_purple = input.purple_pages + adv.weekly_purple_income * weeks;
+    let avail_blue = input.blue_pages + adv.weekly_blue_income * weeks;
+    if avail_purple < total_purple || avail_blue < total_blue {
+        return None;
+    }
+
+    // Per-shop allocation
+    let mut allocations = Vec::new();
+    let mut total_conversions_needed: u32 = 0;
+
+    for &shop in &Shop::ALL {
+        // Total income batches for this shop over W weeks
+        let total_income = if shop == Shop::BaiZu {
+            if adv.baizu_cycle_weeks > 0 && weeks > 0 {
+                weeks / adv.baizu_cycle_weeks
+            } else {
+                0
+            }
+        } else {
+            adv.weekly_shop_income.get(shop) * weeks
+        };
+
+        // Sum deficits for skills in this shop (in units of 40)
+        let total_skill_deficit: u32 = (0..n)
+            .filter(|&i| input.combat_skills[i].shop == shop)
+            .map(|i| (skill_self_deficit[i] + PAGES_PER_UNIT - 1) / PAGES_PER_UNIT) // ceil div
+            .sum();
+
+        let income_to_skills = total_income.min(total_skill_deficit);
+        let conversions_needed = total_skill_deficit - income_to_skills;
+        let pool_available_units =
+            adv.non_combat_pools.get(shop) / PAGES_PER_UNIT + (total_income - income_to_skills);
+
+        if conversions_needed > pool_available_units {
+            return None; // Not enough pool for conversions
+        }
+
+        let fodder_available = (pool_available_units - conversions_needed) * PAGES_PER_UNIT;
+        total_conversions_needed += conversions_needed;
+
+        allocations.push(ShopAllocation {
+            total_income,
+            total_skill_deficit,
+            income_to_skills,
+            conversions_needed,
+            pool_available: pool_available_units * PAGES_PER_UNIT,
+            fodder_available,
+        });
+    }
+
+    // Check conversion capacity
+    let total_conv_capacity = adv.free_conversions_per_week * weeks + adv.conversion_stones;
+    if total_conversions_needed > total_conv_capacity {
+        return None;
+    }
+
+    // Check 仙品
+    let total_fodder: u32 = allocations.iter().map(|a| a.fodder_available).sum();
+    if total_fodder < total_other {
+        return None;
+    }
+
+    Some(allocations)
+}
+
+/// Binary search for minimum weeks
+fn find_minimum_weeks(input: &PlannerInput) -> Option<u32> {
+    // Check W=0 (can we do it with initial resources only?)
+    if check_feasibility(input, 0).is_some() {
+        return Some(0);
+    }
+
+    // Check if feasible at all (at MAX_WEEKS)
+    if check_feasibility(input, MAX_WEEKS).is_none() {
+        return None;
+    }
+
+    // Binary search
+    let mut lo: u32 = 0;
+    let mut hi: u32 = MAX_WEEKS;
+    while lo < hi {
+        let mid = (lo + hi) / 2;
+        if check_feasibility(input, mid).is_some() {
+            hi = mid;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    Some(lo)
+}
+
+// ============================================================
+// Phase 2: Maximize total level with remaining resources
+// Uses bounded enumeration (6 skills × ~14 levels each)
+// ============================================================
+
+/// Find the best additional upgrades beyond minimum targets
+fn find_bonus_levels(
+    input: &PlannerInput,
+    min_weeks: u32,
+) -> Vec<SkillLevel> {
+    let n = input.combat_skills.len();
+    let targets: Vec<SkillLevel> = input.combat_skills.iter().map(|s| s.target_level).collect();
+
+    // For each skill, compute maximum possible level it could reach
+    // (limited by 本体 availability from its shop)
+    let mut max_possible = targets.clone();
+
+    // We try to extend each skill's target and check if the combined
+    // targets are still feasible at min_weeks
+    // Use iterative improvement: try raising each skill one level at a time
+    let mut improved = true;
+    while improved {
+        improved = false;
+        for i in 0..n {
+            let next = max_possible[i].next();
+            if next.is_none() {
+                continue;
+            }
+            let next_level = next.unwrap();
+            let mut test_input = input.clone();
+            for j in 0..n {
+                test_input.combat_skills[j].target_level = max_possible[j];
+            }
+            test_input.combat_skills[i].target_level = next_level;
+
+            if check_feasibility(&test_input, min_weeks).is_some() {
+                max_possible[i] = next_level;
+                improved = true;
+            }
+        }
+    }
+
+    max_possible
+}
+
+// ============================================================
+// Phase 3: Generate the weekly plan
+// Simulate week by week with provably optimal allocation
+// ============================================================
+
+struct SimState {
     skill_levels: Vec<SkillLevel>,
-    skill_pages: Vec<u32>,   // 每个战斗神通的剩余本体书页
-    skill_shops: Vec<Shop>,  // 每个战斗神通的商店
-    skill_targets: Vec<SkillLevel>,
+    skill_pages: Vec<u32>,
+    skill_shops: Vec<Shop>,
+    final_targets: Vec<SkillLevel>,
     non_combat_pools: ShopMap,
     purple_pages: u32,
     blue_pages: u32,
     conversion_stones: u32,
+    free_conv_per_week: u32,
     weekly_shop_income: ShopMap,
-    baizu_cycle_weeks: u32,  // 百族每 N 周获取 1 本
-    free_conversions_per_week: u32,
-    weekly_purple_income: u32,
-    weekly_blue_income: u32,
+    baizu_cycle_weeks: u32,
+    weekly_purple: u32,
+    weekly_blue: u32,
 }
 
-impl PlannerState {
-    fn from_input(input: &PlannerInput) -> Self {
-        PlannerState {
+impl SimState {
+    fn from_input(input: &PlannerInput, final_targets: &[SkillLevel]) -> Self {
+        SimState {
             skill_levels: input.combat_skills.iter().map(|s| s.current_level).collect(),
             skill_pages: input.combat_skills.iter().map(|s| s.remaining_pages).collect(),
             skill_shops: input.combat_skills.iter().map(|s| s.shop).collect(),
-            skill_targets: input.combat_skills.iter().map(|s| s.target_level).collect(),
+            final_targets: final_targets.to_vec(),
             non_combat_pools: input.advanced.non_combat_pools.clone(),
             purple_pages: input.purple_pages,
             blue_pages: input.blue_pages,
             conversion_stones: input.advanced.conversion_stones,
+            free_conv_per_week: input.advanced.free_conversions_per_week,
             weekly_shop_income: input.advanced.weekly_shop_income.clone(),
             baizu_cycle_weeks: input.advanced.baizu_cycle_weeks,
-            free_conversions_per_week: input.advanced.free_conversions_per_week,
-            weekly_purple_income: input.advanced.weekly_purple_income,
-            weekly_blue_income: input.advanced.weekly_blue_income,
+            weekly_purple: input.advanced.weekly_purple_income,
+            weekly_blue: input.advanced.weekly_blue_income,
         }
     }
 
@@ -51,368 +243,164 @@ impl PlannerState {
         }
     }
 
-    fn all_targets_met(&self) -> bool {
-        self.skill_levels
-            .iter()
-            .zip(self.skill_targets.iter())
-            .all(|(cur, tgt)| *cur >= *tgt)
+    fn all_done(&self) -> bool {
+        self.skill_levels.iter().zip(self.final_targets.iter()).all(|(c, t)| *c >= *t)
     }
 
-    /// 计算某个技能从当前等级升一级需要的材料
-    fn next_upgrade_cost(&self, idx: usize) -> Option<(SkillLevel, &'static UpgradeCost)> {
-        let cur = self.skill_levels[idx];
-        let next = cur.next()?;
-        let cost = &UPGRADE_COSTS[next.index()];
-        Some((next, cost))
+    /// Self deficit in pages for skill i
+    fn self_deficit(&self, i: usize) -> u32 {
+        if self.skill_levels[i] >= self.final_targets[i] {
+            return 0;
+        }
+        let cost = total_cost_between(self.skill_levels[i], self.final_targets[i]);
+        cost.self_pages.saturating_sub(self.skill_pages[i])
     }
 
-    /// 尝试为技能 idx 执行一次升级，返回升级动作（如果材料充足）
-    fn try_upgrade(&mut self, idx: usize) -> Option<UpgradeAction> {
-        let (next_level, cost) = self.next_upgrade_cost(idx)?;
-        let from_level = self.skill_levels[idx];
-
-        // 检查本体书页
-        if self.skill_pages[idx] < cost.self_pages {
+    /// Try one upgrade for skill i
+    fn try_upgrade(&mut self, i: usize) -> Option<UpgradeAction> {
+        if self.skill_levels[i] >= self.final_targets[i] {
             return None;
         }
+        let next = self.skill_levels[i].next()?;
+        let cost = &UPGRADE_COSTS[next.index()];
+        let from = self.skill_levels[i];
 
-        // 检查紫色、蓝色
+        if self.skill_pages[i] < cost.self_pages {
+            return None;
+        }
         if self.purple_pages < cost.purple_pages || self.blue_pages < cost.blue_pages {
             return None;
         }
-
-        // 检查仙品书页（从所有池中凑）
-        let total_pool = self.non_combat_pools.total();
-        if total_pool < cost.other_pages {
+        if self.non_combat_pools.total() < cost.other_pages {
             return None;
         }
 
-        // 执行：扣除本体
-        self.skill_pages[idx] -= cost.self_pages;
+        // Deduct self pages
+        self.skill_pages[i] -= cost.self_pages;
 
-        // 扣除仙品：按珍贵度从低到高消耗
-        let mut other_consumed = ShopMap::zero();
-        let mut remaining_other = cost.other_pages;
-        let mut shops_by_rarity: Vec<Shop> = Shop::ALL.to_vec();
-        shops_by_rarity.sort_by_key(|s| s.rarity());
-
-        for &shop in &shops_by_rarity {
-            if remaining_other == 0 {
-                break;
-            }
-            let available = self.non_combat_pools.get(shop);
-            let take = available.min(remaining_other);
+        // Deduct 仙品 by rarity (low first)
+        let mut consumed = ShopMap::zero();
+        let mut remaining = cost.other_pages;
+        let mut shops: Vec<Shop> = Shop::ALL.to_vec();
+        shops.sort_by_key(|s| s.rarity());
+        for &shop in &shops {
+            if remaining == 0 { break; }
+            let take = self.non_combat_pools.get(shop).min(remaining);
             if take > 0 {
                 self.non_combat_pools.sub_clamped(shop, take);
-                other_consumed.add(shop, take);
-                remaining_other -= take;
+                consumed.add(shop, take);
+                remaining -= take;
             }
         }
 
-        // 扣除紫色、蓝色
         self.purple_pages -= cost.purple_pages;
         self.blue_pages -= cost.blue_pages;
-
-        // 升级
-        self.skill_levels[idx] = next_level;
+        self.skill_levels[i] = next;
 
         Some(UpgradeAction {
-            skill_index: idx,
-            from_level,
-            to_level: next_level,
+            skill_index: i,
+            from_level: from,
+            to_level: next,
             self_pages_used: cost.self_pages,
-            other_pages_consumed: other_consumed,
+            other_pages_consumed: consumed,
             purple_pages_used: cost.purple_pages,
             blue_pages_used: cost.blue_pages,
         })
     }
 }
 
-/// 执行规划
-pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
-    let mut state = PlannerState::from_input(input);
-    let mut weeks: Vec<WeekPlan> = Vec::new();
+fn simulate_week(state: &mut SimState, week: u32) -> WeekPlan {
     let n = state.skill_levels.len();
-
-    // 先检查：不进入周循环就能升级的（初始材料已足够）
-    // Phase 0: 尝试用初始资源进行升级
-    {
-        let acquisitions = Vec::new();
-        let conversions = Vec::new();
-        let mut upgrades = Vec::new();
-        loop {
-            let mut any_upgrade = false;
-            for idx in prioritized_skill_order(&state, true) {
-                while let Some(action) = state.try_upgrade(idx) {
-                    upgrades.push(action);
-                    any_upgrade = true;
-                }
-            }
-            if !any_upgrade {
-                break;
-            }
-        }
-        if !upgrades.is_empty() {
-            weeks.push(WeekPlan {
-                week: 0,
-                acquisitions,
-                conversions,
-                upgrades,
-                snapshot: state.snapshot(),
-            });
-        }
-    }
-
-    // Phase 1: 按周规划，直到所有最低目标达成
-    let mut week_num = 1u32;
-    while !state.all_targets_met() && week_num <= MAX_WEEKS {
-        let week_plan = plan_one_week(&mut state, week_num, true);
-        let has_actions = !week_plan.acquisitions.is_empty()
-            || !week_plan.conversions.is_empty()
-            || !week_plan.upgrades.is_empty();
-
-        weeks.push(week_plan);
-
-        // 如果一周内没有任何升级动作且目标未达成，检查是否还有进展可能
-        if !has_actions && !state.all_targets_met() {
-            // 检查是否有每周收入能最终解决问题
-            let has_income = Shop::ALL.iter().any(|s| state.weekly_shop_income.get(*s) > 0)
-                || state.baizu_cycle_weeks > 0
-                || state.weekly_purple_income > 0
-                || state.weekly_blue_income > 0;
-            if !has_income {
-                break; // 无收入且无法升级，终止
-            }
-        }
-
-        week_num += 1;
-    }
-
-    // Phase 2: 最低目标达成后，一次性分配剩余资源继续提升
-    if state.all_targets_met() {
-        let mut final_upgrades = Vec::new();
-        loop {
-            let mut any_upgrade = false;
-            for idx in prioritized_skill_order(&state, false) {
-                while let Some(action) = state.try_upgrade(idx) {
-                    final_upgrades.push(action);
-                    any_upgrade = true;
-                }
-            }
-            if !any_upgrade {
-                break;
-            }
-        }
-        if !final_upgrades.is_empty() {
-            weeks.push(WeekPlan {
-                week: week_num,
-                acquisitions: Vec::new(),
-                conversions: Vec::new(),
-                upgrades: final_upgrades,
-                snapshot: state.snapshot(),
-            });
-        }
-    }
-
-    // 生成不可达原因
-    let mut unreachable_reasons = Vec::new();
-    let feasible = state.all_targets_met();
-    if !feasible {
-        for i in 0..n {
-            if state.skill_levels[i] < state.skill_targets[i] {
-                let label = &input.combat_skills[i].label;
-                let cur = state.skill_levels[i].display_name();
-                let tgt = state.skill_targets[i].display_name();
-
-                // 找到下一次升级卡在哪里
-                let next_level = state.skill_levels[i].next();
-                let bottleneck = if let Some(nl) = next_level {
-                    let cost = &UPGRADE_COSTS[nl.index()];
-                    let mut issues = Vec::new();
-                    if state.skill_pages[i] < cost.self_pages {
-                        issues.push(format!(
-                            "本体书页不足（需要{}，当前{}）",
-                            cost.self_pages, state.skill_pages[i]
-                        ));
-                    }
-                    if cost.other_pages > 0 && state.non_combat_pools.total() < cost.other_pages {
-                        issues.push(format!(
-                            "狗粮不足（需要{}，当前{}）",
-                            cost.other_pages, state.non_combat_pools.total()
-                        ));
-                    }
-                    if cost.purple_pages > 0 && state.purple_pages < cost.purple_pages {
-                        issues.push(format!(
-                            "紫色书页不足（需要{}，当前{}）",
-                            cost.purple_pages, state.purple_pages
-                        ));
-                    }
-                    if cost.blue_pages > 0 && state.blue_pages < cost.blue_pages {
-                        issues.push(format!(
-                            "蓝色书页不足（需要{}，当前{}）",
-                            cost.blue_pages, state.blue_pages
-                        ));
-                    }
-                    if issues.is_empty() {
-                        "资源不足".to_string()
-                    } else {
-                        issues.join("、")
-                    }
-                } else {
-                    "已达最高等级".to_string()
-                };
-
-                unreachable_reasons.push(format!(
-                    "{}: 当前 {}，目标 {}，卡在 {} → {} 升级 — {}",
-                    label,
-                    cur,
-                    tgt,
-                    cur,
-                    next_level.map_or("?".to_string(), |l| l.display_name().to_string()),
-                    bottleneck
-                ));
-            }
-        }
-    }
-
-    PlannerOutput {
-        feasible,
-        weeks: if feasible { weeks } else { Vec::new() },
-        unreachable_reasons,
-        final_levels: state.skill_levels.clone(),
-    }
-}
-
-/// 规划单周
-fn plan_one_week(state: &mut PlannerState, week: u32, phase1: bool) -> WeekPlan {
     let mut acquisitions = Vec::new();
     let mut conversions = Vec::new();
     let mut upgrades = Vec::new();
 
-    // Step 1: 接收每周收入
-    state.purple_pages += state.weekly_purple_income;
-    state.blue_pages += state.weekly_blue_income;
+    // Step 1: Weekly income
+    state.purple_pages += state.weekly_purple;
+    state.blue_pages += state.weekly_blue;
 
     for &shop in &Shop::ALL {
-        // 百族使用周期制：每 N 周获取 1 本
-        let income_count = if shop == Shop::BaiZu {
-            if state.baizu_cycle_weeks > 0 && week % state.baizu_cycle_weeks == 0 {
-                1
-            } else {
-                0
-            }
+        let batches = if shop == Shop::BaiZu {
+            if state.baizu_cycle_weeks > 0 && week % state.baizu_cycle_weeks == 0 { 1 } else { 0 }
         } else {
             state.weekly_shop_income.get(shop)
         };
+        if batches == 0 { continue; }
+        let pages = batches * PAGES_PER_UNIT;
 
-        if income_count == 0 {
-            continue;
-        }
-        let pages = income_count * PAGES_PER_UNIT;
+        // Find skill in this shop with most 本体 deficit
+        let best = (0..n)
+            .filter(|&i| state.skill_shops[i] == shop && state.self_deficit(i) > 0)
+            .max_by_key(|&i| state.self_deficit(i));
 
-        // 决定收入给谁：优先给该商店中本体书页最缺的战斗神通
-        let best_target = find_best_income_target(state, shop, phase1);
-
-        match best_target {
-            Some(idx) => {
-                state.skill_pages[idx] += pages;
-                acquisitions.push(ShopAcquisition {
-                    shop,
-                    target_skill_index: Some(idx),
-                    pages,
-                });
+        match best {
+            Some(i) => {
+                state.skill_pages[i] += pages;
+                acquisitions.push(ShopAcquisition { shop, target_skill_index: Some(i), pages });
             }
             None => {
-                // 没有该商店的战斗神通需要本体，进入狗粮池
                 state.non_combat_pools.add(shop, pages);
-                acquisitions.push(ShopAcquisition {
-                    shop,
-                    target_skill_index: None,
-                    pages,
-                });
+                acquisitions.push(ShopAcquisition { shop, target_skill_index: None, pages });
             }
         }
     }
 
-    // Step 2: 执行转换（非战斗池 → 战斗神通本体）
-    let mut free_conversions_left = state.free_conversions_per_week;
+    // Step 2: Conversions (pool → skill 本体)
+    let mut free_left = state.free_conv_per_week;
 
-    // 收集需要本体书页的战斗神通，按紧急度排序
-    let mut conversion_needs: Vec<(usize, u32)> = Vec::new();
-    for idx in 0..state.skill_levels.len() {
-        let target = if phase1 {
-            state.skill_targets[idx]
-        } else {
-            SkillLevel::Tian5
-        };
-        if state.skill_levels[idx] >= target {
-            continue;
-        }
-        let needed = total_cost_between(state.skill_levels[idx], target);
-        if needed.self_pages > state.skill_pages[idx] {
-            let deficit = needed.self_pages - state.skill_pages[idx];
-            conversion_needs.push((idx, deficit));
-        }
-    }
-    // 按本体缺口从大到小排序
-    conversion_needs.sort_by(|a, b| b.1.cmp(&a.1));
+    // Skills needing 本体, sorted by deficit descending
+    let mut needs: Vec<(usize, u32)> = (0..n)
+        .filter(|&i| state.self_deficit(i) > 0)
+        .map(|i| (i, state.self_deficit(i)))
+        .collect();
+    needs.sort_by(|a, b| b.1.cmp(&a.1));
 
-    for (idx, _deficit) in &conversion_needs {
-        let shop = state.skill_shops[*idx];
-        let pool_available = state.non_combat_pools.get(shop);
+    for (i, _) in &needs {
+        let shop = state.skill_shops[*i];
+        let deficit_units = (state.self_deficit(*i) + PAGES_PER_UNIT - 1) / PAGES_PER_UNIT;
+        let pool_units = state.non_combat_pools.get(shop) / PAGES_PER_UNIT;
+        let to_do = deficit_units.min(pool_units);
 
-        // 计算还需要多少本体
-        let target = if phase1 {
-            state.skill_targets[*idx]
-        } else {
-            SkillLevel::Tian5
-        };
-        let needed = total_cost_between(state.skill_levels[*idx], target);
-        let self_deficit = needed.self_pages.saturating_sub(state.skill_pages[*idx]);
-        let conversions_needed = (self_deficit + PAGES_PER_UNIT - 1) / PAGES_PER_UNIT;
-        let conversions_possible = pool_available / PAGES_PER_UNIT;
-        let conversions_to_do = conversions_needed.min(conversions_possible);
-
-        for _ in 0..conversions_to_do {
-            if free_conversions_left > 0 {
-                free_conversions_left -= 1;
+        for _ in 0..to_do {
+            if free_left > 0 {
+                free_left -= 1;
                 state.non_combat_pools.sub_clamped(shop, PAGES_PER_UNIT);
-                state.skill_pages[*idx] += PAGES_PER_UNIT;
+                state.skill_pages[*i] += PAGES_PER_UNIT;
                 conversions.push(ConversionAction {
-                    shop,
-                    target_skill_index: *idx,
-                    used_stone: false,
-                    pages: PAGES_PER_UNIT,
+                    shop, target_skill_index: *i, used_stone: false, pages: PAGES_PER_UNIT,
                 });
             } else if state.conversion_stones > 0 {
                 state.conversion_stones -= 1;
                 state.non_combat_pools.sub_clamped(shop, PAGES_PER_UNIT);
-                state.skill_pages[*idx] += PAGES_PER_UNIT;
+                state.skill_pages[*i] += PAGES_PER_UNIT;
                 conversions.push(ConversionAction {
-                    shop,
-                    target_skill_index: *idx,
-                    used_stone: true,
-                    pages: PAGES_PER_UNIT,
+                    shop, target_skill_index: *i, used_stone: true, pages: PAGES_PER_UNIT,
                 });
             } else {
-                break; // 没有转换次数了
+                break;
             }
         }
     }
 
-    // Step 3: 尝试升级
+    // Step 3: Upgrade — prioritize skills closest to next upgrade threshold
     loop {
-        let mut any_upgrade = false;
-        for idx in prioritized_skill_order(state, phase1) {
-            if let Some(action) = state.try_upgrade(idx) {
+        // Sort by: skills with smallest gap first (fastest to complete)
+        let mut order: Vec<usize> = (0..n)
+            .filter(|&i| state.skill_levels[i] < state.final_targets[i])
+            .collect();
+        order.sort_by_key(|&i| {
+            state.final_targets[i].index() as i32 - state.skill_levels[i].index() as i32
+        });
+
+        let mut any = false;
+        for i in order {
+            if let Some(action) = state.try_upgrade(i) {
                 upgrades.push(action);
-                any_upgrade = true;
-                break; // 每次升级后重新排优先级
+                any = true;
+                break;
             }
         }
-        if !any_upgrade {
-            break;
-        }
+        if !any { break; }
     }
 
     WeekPlan {
@@ -424,53 +412,128 @@ fn plan_one_week(state: &mut PlannerState, week: u32, phase1: bool) -> WeekPlan 
     }
 }
 
-/// 确定优先升级顺序：
-/// Phase1: 优先升离目标最近的（容易达标的先完成）
-/// Phase2: 优先升等级最低的（拉齐水平）
-fn prioritized_skill_order(state: &PlannerState, phase1: bool) -> Vec<usize> {
-    let n = state.skill_levels.len();
-    let mut indices: Vec<usize> = (0..n).collect();
+// ============================================================
+// Public entry point
+// ============================================================
 
-    if phase1 {
-        // 优先升距离目标差距最小的（更容易达标）
-        indices.sort_by_key(|&i| {
-            let gap = state.skill_targets[i].index() as i32 - state.skill_levels[i].index() as i32;
-            if gap <= 0 { i32::MAX } else { gap } // 已达标的排最后
-        });
-    } else {
-        // 优先升等级最低的
-        indices.sort_by_key(|&i| state.skill_levels[i].index());
+pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
+    let n = input.combat_skills.len();
+
+    // Phase 1: Find minimum weeks
+    let min_weeks = match find_minimum_weeks(input) {
+        Some(w) => w,
+        None => {
+            // Infeasible — generate reasons
+            return PlannerOutput {
+                feasible: false,
+                weeks: Vec::new(),
+                unreachable_reasons: generate_reasons(input),
+                final_levels: input.combat_skills.iter().map(|s| s.current_level).collect(),
+            };
+        }
+    };
+
+    // Phase 2: Find bonus levels achievable with same min_weeks resources
+    let final_targets = find_bonus_levels(input, min_weeks);
+
+    // Phase 3: Simulate week by week
+    let mut state = SimState::from_input(input, &final_targets);
+    let mut weeks = Vec::new();
+
+    // Week 0: upgrades with initial resources
+    {
+        let mut w0_upgrades = Vec::new();
+        loop {
+            let mut order: Vec<usize> = (0..n)
+                .filter(|&i| state.skill_levels[i] < state.final_targets[i])
+                .collect();
+            order.sort_by_key(|&i| {
+                state.final_targets[i].index() as i32 - state.skill_levels[i].index() as i32
+            });
+            let mut any = false;
+            for i in order {
+                if let Some(action) = state.try_upgrade(i) {
+                    w0_upgrades.push(action);
+                    any = true;
+                    break;
+                }
+            }
+            if !any { break; }
+        }
+        if !w0_upgrades.is_empty() {
+            weeks.push(WeekPlan {
+                week: 0,
+                acquisitions: Vec::new(),
+                conversions: Vec::new(),
+                upgrades: w0_upgrades,
+                snapshot: state.snapshot(),
+            });
+        }
     }
 
-    indices
+    // Weekly simulation
+    for w in 1..=min_weeks {
+        if state.all_done() { break; }
+        let plan = simulate_week(&mut state, w);
+        weeks.push(plan);
+    }
+
+    PlannerOutput {
+        feasible: true,
+        weeks,
+        unreachable_reasons: Vec::new(),
+        final_levels: state.skill_levels.clone(),
+    }
 }
 
-/// 找到该商店中最需要本体书页的战斗神通
-fn find_best_income_target(state: &PlannerState, shop: Shop, phase1: bool) -> Option<usize> {
-    let mut best: Option<(usize, u32)> = None;
+/// Generate human-readable reasons for infeasibility
+fn generate_reasons(input: &PlannerInput) -> Vec<String> {
+    let mut reasons = Vec::new();
+    let adv = &input.advanced;
 
-    for (i, &s) in state.skill_shops.iter().enumerate() {
-        if s != shop {
-            continue;
-        }
-        let target = if phase1 {
-            state.skill_targets[i]
+    for (i, s) in input.combat_skills.iter().enumerate() {
+        if s.current_level >= s.target_level { continue; }
+
+        let cost = total_cost_between(s.current_level, s.target_level);
+        let mut issues = Vec::new();
+
+        // Check 本体: max possible from this shop over MAX_WEEKS
+        let shop = s.shop;
+        let max_income = if shop == Shop::BaiZu {
+            if adv.baizu_cycle_weeks > 0 { MAX_WEEKS / adv.baizu_cycle_weeks } else { 0 }
         } else {
-            SkillLevel::Tian5
+            adv.weekly_shop_income.get(shop) * MAX_WEEKS
         };
-        if state.skill_levels[i] >= target {
-            continue;
+        let max_self = s.remaining_pages + max_income * PAGES_PER_UNIT
+            + adv.non_combat_pools.get(shop); // pool can also be converted
+        if max_self < cost.self_pages {
+            issues.push(format!("本体书页不足（需要{}，最多可获得{}）", cost.self_pages, max_self));
         }
-        let needed = total_cost_between(state.skill_levels[i], target);
-        let deficit = needed.self_pages.saturating_sub(state.skill_pages[i]);
-        if deficit > 0 {
-            match best {
-                None => best = Some((i, deficit)),
-                Some((_, bd)) if deficit > bd => best = Some((i, deficit)),
-                _ => {}
-            }
-        }
-    }
 
-    best.map(|(i, _)| i)
+        // Check purple
+        let max_purple = input.purple_pages + adv.weekly_purple_income * MAX_WEEKS;
+        if max_purple < cost.purple_pages {
+            issues.push(format!("紫色书页不足（需要{}，无每周收入无法积累）", cost.purple_pages));
+        }
+
+        // Check blue
+        let max_blue = input.blue_pages + adv.weekly_blue_income * MAX_WEEKS;
+        if max_blue < cost.blue_pages {
+            issues.push(format!("蓝色书页不足（需要{}，无每周收入无法积累）", cost.blue_pages));
+        }
+
+        if issues.is_empty() {
+            // Could be 仙品 or conversion capacity
+            issues.push("仙品或转换次数不足".to_string());
+        }
+
+        reasons.push(format!(
+            "{}: 当前 {}，目标 {} — {}",
+            s.label,
+            s.current_level.display_name(),
+            s.target_level.display_name(),
+            issues.join("、")
+        ));
+    }
+    reasons
 }
