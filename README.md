@@ -2,7 +2,7 @@
 
 > 手游《问剑长生》的神通升级规划桌面应用，帮助玩家计算最优的按周升级路径。
 
-![神通输入界面](Screenshots/1.png?v=2)
+![神通输入界面](Screenshots/a.png)
 
 ## 功能特性
 
@@ -16,12 +16,12 @@
 
 <table>
   <tr>
-    <td><img src="Screenshots/1.png?v=2" alt="神通配置" /></td>
-    <td><img src="Screenshots/2.png" alt="材料设置" /></td>
+    <td><img src="Screenshots/a.png" alt="神通配置" /></td>
+    <td><img src="Screenshots/b.png" alt="材料设置" /></td>
   </tr>
   <tr>
-    <td><img src="Screenshots/3.png" alt="规划结果" /></td>
-    <td><img src="Screenshots/4.png" alt="逐周方案" /></td>
+    <td><img src="Screenshots/c.png" alt="规划结果" /></td>
+    <td><img src="Screenshots/d.png" alt="逐周方案" /></td>
   </tr>
 </table>
 
