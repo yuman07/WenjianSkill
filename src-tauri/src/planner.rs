@@ -3,6 +3,21 @@ use crate::models::*;
 const PAGES_PER_UNIT: u32 = 40;
 const MAX_WEEKS: u32 = 500;
 
+/// Calculate total income batches for a shop over `weeks` weeks
+/// 道蕴 and 百族 use cycle-based income, others use weekly count
+fn shop_income_over_weeks(shop: Shop, adv: &AdvancedSettings, weeks: u32) -> u32 {
+    if weeks == 0 { return 0; }
+    match shop {
+        Shop::DaoYun => {
+            if adv.daoyun_cycle_weeks > 0 { weeks / adv.daoyun_cycle_weeks } else { 0 }
+        }
+        Shop::BaiZu => {
+            if adv.baizu_cycle_weeks > 0 { weeks / adv.baizu_cycle_weeks } else { 0 }
+        }
+        _ => adv.weekly_shop_income.get(shop) * weeks,
+    }
+}
+
 // ============================================================
 // Phase 1: Find minimum weeks via binary search
 // The key insight: for a given W, the optimal allocation is
@@ -67,16 +82,7 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> Option<Vec<ShopAllocat
     let mut total_conversions_needed: u32 = 0;
 
     for &shop in &Shop::ALL {
-        // Total income batches for this shop over W weeks
-        let total_income = if shop == Shop::BaiZu {
-            if adv.baizu_cycle_weeks > 0 && weeks > 0 {
-                weeks / adv.baizu_cycle_weeks
-            } else {
-                0
-            }
-        } else {
-            adv.weekly_shop_income.get(shop) * weeks
-        };
+        let total_income = shop_income_over_weeks(shop, adv, weeks);
 
         // Sum deficits for skills in this shop (in units of 40)
         let total_skill_deficit: u32 = (0..n)
@@ -208,6 +214,7 @@ struct SimState {
     conversion_stones: u32,
     free_conv_per_week: u32,
     weekly_shop_income: ShopMap,
+    daoyun_cycle_weeks: u32,
     baizu_cycle_weeks: u32,
     weekly_purple: u32,
     weekly_blue: u32,
@@ -226,6 +233,7 @@ impl SimState {
             conversion_stones: input.advanced.conversion_stones,
             free_conv_per_week: input.advanced.free_conversions_per_week,
             weekly_shop_income: input.advanced.weekly_shop_income.clone(),
+            daoyun_cycle_weeks: input.advanced.daoyun_cycle_weeks,
             baizu_cycle_weeks: input.advanced.baizu_cycle_weeks,
             weekly_purple: input.advanced.weekly_purple_income,
             weekly_blue: input.advanced.weekly_blue_income,
@@ -320,10 +328,14 @@ fn simulate_week(state: &mut SimState, week: u32) -> WeekPlan {
     state.blue_pages += state.weekly_blue;
 
     for &shop in &Shop::ALL {
-        let batches = if shop == Shop::BaiZu {
-            if state.baizu_cycle_weeks > 0 && week % state.baizu_cycle_weeks == 0 { 1 } else { 0 }
-        } else {
-            state.weekly_shop_income.get(shop)
+        let batches = match shop {
+            Shop::DaoYun => {
+                if state.daoyun_cycle_weeks > 0 && week % state.daoyun_cycle_weeks == 0 { 1 } else { 0 }
+            }
+            Shop::BaiZu => {
+                if state.baizu_cycle_weeks > 0 && week % state.baizu_cycle_weeks == 0 { 1 } else { 0 }
+            }
+            _ => state.weekly_shop_income.get(shop),
         };
         if batches == 0 { continue; }
         let pages = batches * PAGES_PER_UNIT;
@@ -566,11 +578,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
 
         let cost = total_cost_between(s.current_level, s.target_level);
         let shop = s.shop;
-        let max_income = if shop == Shop::BaiZu {
-            if adv.baizu_cycle_weeks > 0 { MAX_WEEKS / adv.baizu_cycle_weeks } else { 0 }
-        } else {
-            adv.weekly_shop_income.get(shop) * MAX_WEEKS
-        };
+        let max_income = shop_income_over_weeks(shop, adv, MAX_WEEKS);
         let max_self = s.remaining_pages + max_income * PAGES_PER_UNIT
             + adv.non_combat_pools.get(shop);
         if max_self < cost.self_pages {
@@ -583,11 +591,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
 
     // Check global 仙品 (cross-shop)
     let max_fodder: u32 = Shop::ALL.iter().map(|&shop| {
-        let income = if shop == Shop::BaiZu {
-            if adv.baizu_cycle_weeks > 0 { MAX_WEEKS / adv.baizu_cycle_weeks } else { 0 }
-        } else {
-            adv.weekly_shop_income.get(shop) * MAX_WEEKS
-        };
+        let income = shop_income_over_weeks(shop, adv, MAX_WEEKS);
         let deficit: u32 = (0..n)
             .filter(|&i| input.combat_skills[i].shop == shop)
             .map(|i| {

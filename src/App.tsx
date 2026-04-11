@@ -151,8 +151,8 @@ export default function App() {
             {/* 每周收入 */}
             <div>
               <label className="block text-xs text-gray-500 mb-2">每周商店兑换次数（每次兑换 40 张书页）</label>
-              <div className="grid grid-cols-4 gap-2">
-                {SHOPS.filter((s) => s !== "百族").map((shop) => (
+              <div className="grid grid-cols-3 gap-2">
+                {SHOPS.filter((s) => s !== "百族" && s !== "道蕴").map((shop) => (
                   <div key={shop}>
                     <label className="block text-xs text-gray-400 mb-1">{shop}</label>
                     <input
@@ -166,16 +166,28 @@ export default function App() {
               </div>
             </div>
 
-            {/* 百族周期 */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500">百族商店：每</span>
-              <input
-                type="number" min={0}
-                value={advanced.baizuCycleWeeks}
-                onChange={(e) => setAdvanced({ ...advanced, baizuCycleWeeks: Math.max(0, parseInt(e.target.value) || 0) })}
-                className="w-16 text-sm text-center border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
-              />
-              <span className="text-xs text-gray-500">周兑换 1 本（填 0 表示不兑换）</span>
+            {/* 道蕴 + 百族周期 */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">道蕴商店：每</span>
+                <input
+                  type="number" min={0}
+                  value={advanced.daoyunCycleWeeks}
+                  onChange={(e) => setAdvanced({ ...advanced, daoyunCycleWeeks: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="w-16 text-sm text-center border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
+                />
+                <span className="text-xs text-gray-500">周兑换 1 本（填 0 表示不兑换）</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">百族商店：每</span>
+                <input
+                  type="number" min={0}
+                  value={advanced.baizuCycleWeeks}
+                  onChange={(e) => setAdvanced({ ...advanced, baizuCycleWeeks: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="w-16 text-sm text-center border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
+                />
+                <span className="text-xs text-gray-500">周兑换 1 本（填 0 表示不兑换）</span>
+              </div>
             </div>
 
             {/* 每周紫色/蓝色收入 */}

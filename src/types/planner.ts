@@ -29,6 +29,7 @@ export interface AdvancedSettings {
   conversionStones: number;
   nonCombatPools: Record<Shop, number>;
   weeklyShopIncome: Record<Shop, number>;
+  daoyunCycleWeeks: number; // 道蕴每 N 周获取 1 本，默认 3
   baizuCycleWeeks: number; // 百族每 N 周获取 1 本，默认 4
   freeConversionsPerWeek: number; // 每周免费转换次数，3-10，默认 3
   weeklyPurpleIncome: number;
@@ -48,7 +49,8 @@ export function defaultAdvancedSettings(): AdvancedSettings {
   return {
     conversionStones: 0,
     nonCombatPools: { 论剑: 0, 诸天: 0, 宗门: 0, 道蕴: 0, 百族: 0 },
-    weeklyShopIncome: { 论剑: 1, 诸天: 1, 宗门: 1, 道蕴: 1, 百族: 0 },
+    weeklyShopIncome: { 论剑: 1, 诸天: 1, 宗门: 1, 道蕴: 0, 百族: 0 },
+    daoyunCycleWeeks: 3,
     baizuCycleWeeks: 4,
     freeConversionsPerWeek: 3,
     weeklyPurpleIncome: 0,

@@ -255,6 +255,8 @@ pub struct AdvancedSettings {
     pub non_combat_pools: ShopMap,
     #[serde(rename = "weeklyShopIncome")]
     pub weekly_shop_income: ShopMap,
+    #[serde(rename = "daoyunCycleWeeks")]
+    pub daoyun_cycle_weeks: u32,
     #[serde(rename = "baizuCycleWeeks")]
     pub baizu_cycle_weeks: u32,
     #[serde(rename = "freeConversionsPerWeek")]
