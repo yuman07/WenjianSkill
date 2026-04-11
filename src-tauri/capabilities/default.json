@@ -12,6 +12,11 @@
     "fs:default",
     "fs:allow-write-text-file",
     "store:default",
+    "shell:default",
+    {
+      "identifier": "shell:allow-open",
+      "allow": [{ "url": "https://github.com/**" }]
+    },
     {
       "identifier": "fs:scope",
       "allow": [

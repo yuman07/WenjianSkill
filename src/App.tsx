@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-shell";
 import SkillCard from "./components/SkillCard";
 import PlanOutput from "./components/PlanOutput";
 import { SHOPS } from "./types/game";
@@ -117,8 +118,8 @@ export default function App() {
       <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex items-baseline gap-2 mb-1">
           <h1 className="text-xl font-bold text-gray-800">问剑长生 · 神通规划</h1>
-          <a href="https://github.com/yuman07/WenjianSkill" target="_blank" rel="noopener noreferrer"
-            className="text-xs text-blue-400 hover:text-blue-600 underline transition-colors">v1.0.0</a>
+          <button onClick={() => open("https://github.com/yuman07/WenjianSkill")}
+            className="text-xs text-blue-400 hover:text-blue-600 transition-colors cursor-pointer">v1.0.0</button>
         </div>
         <p className="text-sm text-gray-500 mb-6">选择 6 个战斗神通，设定目标等级，生成最优升级路径</p>
 
