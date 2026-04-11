@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { save, ask } from "@tauri-apps/plugin-dialog";
+import { writeTextFile, exists } from "@tauri-apps/plugin-fs";
 import type { PlannerOutput, WeekPlan, CombatSkillInput } from "../types/planner";
 import { skillDisplayName } from "../types/planner";
 import { SHOPS } from "../types/game";
@@ -159,7 +159,17 @@ export default function PlanOutput({ output, skills }: Props) {
       defaultPath: "神通规划方案.txt",
       filters: [{ name: "文本文件", extensions: ["txt"] }],
     });
-    if (path) { await writeTextFile(path, text); }
+    if (!path) return;
+    if (await exists(path)) {
+      const ok = await ask("该文件已存在，是否替换？", {
+        title: "确认替换",
+        kind: "warning",
+        okLabel: "替换",
+        cancelLabel: "取消",
+      });
+      if (!ok) return;
+    }
+    await writeTextFile(path, text);
   };
 
   return (
