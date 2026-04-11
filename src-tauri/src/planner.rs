@@ -117,14 +117,20 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
         return false;
     }
 
-    // Per-skill 仙品 check: skill i's 仙品 must come from OTHER shops' surplus
-    // (same-shop surplus is used for 本体 redistribution first, remainder is 仙品)
-    // Actually: skill i can get 仙品 from any surplus EXCEPT its own skill's surplus.
-    // But since surplus is computed per-shop (after redistribution), and skill i's own
-    // surplus within its shop is already net of redistribution, the check simplifies to:
-    // other_needed[i] <= total_surplus - own_shop_surplus... no, simpler:
-    // With 6 skills, just check total_surplus >= total_other (already done).
-    // The per-skill binding case is rare and caught by total check in practice.
+    // Per-skill 仙品 check: skill i can't use its OWN surplus as its own 仙品.
+    // Available 仙品 for skill i = total_surplus - skill_i's own surplus.
+    for i in 0..n {
+        if self_needed[i] == 0 { continue; } // no upgrades needed
+        let cost = total_cost_between(
+            input.combat_skills[i].current_level,
+            input.combat_skills[i].target_level,
+        );
+        let own_surplus = total_pages[i].saturating_sub(self_needed[i]);
+        let available_for_i = total_surplus.saturating_sub(own_surplus);
+        if available_for_i < cost.other_pages {
+            return false;
+        }
+    }
 
     true
 }
@@ -530,7 +536,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
         }
     }
 
-    // Global 仙品 check
+    // Global 仙品 check (combat skill surplus + fodder pool income)
     let total_surplus: u32 = Shop::ALL.iter().map(|&shop| {
         let sp: u32 = (0..n).filter(|&i| input.combat_skills[i].shop == shop)
             .map(|i| input.combat_skills[i].remaining_pages + skill_income_pages(&input.combat_skills[i], MAX_WEEKS)).sum();
@@ -540,11 +546,12 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
                 if s.current_level >= s.target_level { 0 }
                 else { total_cost_between(s.current_level, s.target_level).self_pages }
             }).sum();
-        sp.saturating_sub(ss)
+        let fodder = adv.fodder_income.pages_over_weeks(shop, MAX_WEEKS);
+        (sp + fodder).saturating_sub(ss)
     }).sum();
     if total_surplus < total_other_need {
         reasons.push(format!(
-            "仙品（狗粮）不足：合计需要 {}，所有神通多余书页最多 {}",
+            "仙品（狗粮）不足：合计需要 {}，所有来源最多可提供 {}",
             total_other_need, total_surplus
         ));
     }
