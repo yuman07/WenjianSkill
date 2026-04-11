@@ -345,62 +345,90 @@ fn simulate_week(state: &mut SimState, week: u32) -> WeekPlan {
         }
     }
 
-    // Step 2: Conversions (pool → skill 本体)
+    // Step 2 & 3: Interleave conversions and upgrades
+    // Strategy: convert only what's needed for the NEXT upgrade of each skill,
+    // then upgrade, then repeat. This preserves pool as 仙品 for current upgrades.
     let mut free_left = state.free_conv_per_week;
 
-    // Skills needing 本体, sorted by deficit descending
-    let mut needs: Vec<(usize, u32)> = (0..n)
-        .filter(|&i| state.self_deficit(i) > 0)
-        .map(|i| (i, state.self_deficit(i)))
-        .collect();
-    needs.sort_by(|a, b| b.1.cmp(&a.1));
-
-    for (i, _) in &needs {
-        let shop = state.skill_shops[*i];
-        let deficit_units = (state.self_deficit(*i) + PAGES_PER_UNIT - 1) / PAGES_PER_UNIT;
-        let pool_units = state.non_combat_pools.get(shop) / PAGES_PER_UNIT;
-        let to_do = deficit_units.min(pool_units);
-
-        for _ in 0..to_do {
-            if free_left > 0 {
-                free_left -= 1;
-                state.non_combat_pools.sub_clamped(shop, PAGES_PER_UNIT);
-                state.skill_pages[*i] += PAGES_PER_UNIT;
-                conversions.push(ConversionAction {
-                    shop, target_skill_index: *i, used_stone: false, pages: PAGES_PER_UNIT,
-                });
-            } else if state.conversion_stones > 0 {
-                state.conversion_stones -= 1;
-                state.non_combat_pools.sub_clamped(shop, PAGES_PER_UNIT);
-                state.skill_pages[*i] += PAGES_PER_UNIT;
-                conversions.push(ConversionAction {
-                    shop, target_skill_index: *i, used_stone: true, pages: PAGES_PER_UNIT,
-                });
-            } else {
-                break;
-            }
-        }
-    }
-
-    // Step 3: Upgrade — prioritize skills closest to next upgrade threshold
     loop {
-        // Sort by: skills with smallest gap first (fastest to complete)
-        let mut order: Vec<usize> = (0..n)
+        // First, try upgrading without any new conversions
+        let mut upgraded_any = false;
+        loop {
+            let mut order: Vec<usize> = (0..n)
+                .filter(|&i| state.skill_levels[i] < state.final_targets[i])
+                .collect();
+            order.sort_by_key(|&i| {
+                state.final_targets[i].index() as i32 - state.skill_levels[i].index() as i32
+            });
+            let mut any = false;
+            for i in order {
+                if let Some(action) = state.try_upgrade(i) {
+                    upgrades.push(action);
+                    any = true;
+                    upgraded_any = true;
+                    break;
+                }
+            }
+            if !any { break; }
+        }
+
+        // Then, try converting ONE batch for the most urgent skill that needs 本体
+        // to unlock its next upgrade. Only convert if it enables a new upgrade.
+        if free_left == 0 && state.conversion_stones == 0 {
+            break;
+        }
+
+        let mut converted_any = false;
+        // Sort skills: closest to next upgrade first
+        let mut candidates: Vec<usize> = (0..n)
             .filter(|&i| state.skill_levels[i] < state.final_targets[i])
             .collect();
-        order.sort_by_key(|&i| {
+        candidates.sort_by_key(|&i| {
             state.final_targets[i].index() as i32 - state.skill_levels[i].index() as i32
         });
 
-        let mut any = false;
-        for i in order {
-            if let Some(action) = state.try_upgrade(i) {
-                upgrades.push(action);
-                any = true;
+        for &i in &candidates {
+            let next = state.skill_levels[i].next();
+            if next.is_none() { continue; }
+            let next_cost = &UPGRADE_COSTS[next.unwrap().index()];
+
+            // Only convert if this skill needs more 本体 for its next upgrade
+            if state.skill_pages[i] >= next_cost.self_pages {
+                continue;
+            }
+
+            let shop = state.skill_shops[i];
+            let pool_units = state.non_combat_pools.get(shop) / PAGES_PER_UNIT;
+            if pool_units == 0 { continue; }
+
+            // Convert one batch
+            if free_left > 0 {
+                free_left -= 1;
+                state.non_combat_pools.sub_clamped(shop, PAGES_PER_UNIT);
+                state.skill_pages[i] += PAGES_PER_UNIT;
+                conversions.push(ConversionAction {
+                    shop, target_skill_index: i, used_stone: false, pages: PAGES_PER_UNIT,
+                });
+                converted_any = true;
+                break;
+            } else if state.conversion_stones > 0 {
+                state.conversion_stones -= 1;
+                state.non_combat_pools.sub_clamped(shop, PAGES_PER_UNIT);
+                state.skill_pages[i] += PAGES_PER_UNIT;
+                conversions.push(ConversionAction {
+                    shop, target_skill_index: i, used_stone: true, pages: PAGES_PER_UNIT,
+                });
+                converted_any = true;
                 break;
             }
         }
-        if !any { break; }
+
+        if !converted_any && !upgraded_any {
+            break;
+        }
+        if !converted_any {
+            break; // No more conversions possible/needed, done for this week
+        }
     }
 
     WeekPlan {
