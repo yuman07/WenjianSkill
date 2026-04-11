@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import SkillCard from "./components/SkillCard";
 import PlanOutput from "./components/PlanOutput";
@@ -11,6 +11,7 @@ import type {
   FodderIncome,
 } from "./types/planner";
 import { defaultCombatSkill, defaultAdvancedSettings, skillDisplayName } from "./types/planner";
+import { saveState, loadState } from "./utils/persistence";
 
 function createInitialSkills(): CombatSkillInput[] {
   return Array.from({ length: 6 }, () => defaultCombatSkill());
@@ -24,6 +25,35 @@ export default function App() {
   const [output, setOutput] = useState<PlannerOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const initialized = useRef(false);
+
+  // Load persisted state on startup
+  useEffect(() => {
+    loadState().then((saved) => {
+      if (saved) {
+        setSkills(saved.skills);
+        setPurplePages(saved.purplePages);
+        setBluePages(saved.bluePages);
+        setAdvanced(saved.advanced);
+      }
+      initialized.current = true;
+    });
+  }, []);
+
+  // Auto-save when any input changes (debounced)
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  const debouncedSave = useCallback(() => {
+    if (!initialized.current) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      saveState({ skills, purplePages, bluePages, advanced });
+    }, 500);
+  }, [skills, purplePages, bluePages, advanced]);
+
+  useEffect(() => {
+    debouncedSave();
+    return () => clearTimeout(saveTimer.current);
+  }, [debouncedSave]);
 
   const updateSkill = (idx: number, skill: CombatSkillInput) => {
     const next = [...skills];
