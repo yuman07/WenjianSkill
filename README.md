@@ -12,6 +12,25 @@
 - **导出方案** — 支持导出规划方案为 TXT 文件，方便分享或离线查阅
 - **自动保存** — 所有设置自动持久化，重启应用后保留上次输入
 
+## 安装
+
+前往 [Releases](https://github.com/yuman07/WenjianSkill/releases/latest) 页面下载对应平台的安装包。
+
+### macOS
+
+1. 下载 `WenjianSkill_x.x.x_aarch64.dmg`
+2. 打开 DMG 文件，将应用拖入「应用程序」文件夹
+3. 首次打开如提示"无法验证开发者"，前往 **系统设置 → 隐私与安全性**，点击「仍要打开」即可
+
+> 仅支持 Apple Silicon (M 系列芯片) Mac。
+
+### Windows
+
+1. 下载 `wenjian-skill.exe`
+2. 双击即可运行，无需安装
+
+> 便携式应用，可放在任意目录。仅支持 64 位 Windows 10 及以上。
+
 ## 截图
 
 <table>
