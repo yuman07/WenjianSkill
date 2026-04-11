@@ -1,3 +1,24 @@
+/** 境界 */
+export type Realm = "人界一" | "人界二" | "返虚" | "合体" | "大乘" | "渡劫";
+export const REALMS: Realm[] = ["人界一", "人界二", "返虚", "合体", "大乘", "渡劫"];
+
+/** 职业 */
+export type SkillClass = "剑" | "火" | "雷" | "百族";
+export const BASE_CLASSES: SkillClass[] = ["剑", "火", "雷"];
+
+/** 拥有百族职业的境界 */
+export const REALMS_WITH_BAIZU: Realm[] = ["返虚", "合体", "大乘"];
+
+/** 根据境界返回可选职业 */
+export function classesForRealm(realm: Realm): SkillClass[] {
+  return REALMS_WITH_BAIZU.includes(realm) ? [...BASE_CLASSES, "百族"] : [...BASE_CLASSES];
+}
+
+/** 根据职业返回可选商店 */
+export function shopsForClass(cls: SkillClass): Shop[] {
+  return cls === "百族" ? ["百族"] : ["论剑", "诸天", "宗门", "道蕴"];
+}
+
 /** 商店类型 */
 export type Shop = "论剑" | "诸天" | "宗门" | "道蕴" | "百族";
 

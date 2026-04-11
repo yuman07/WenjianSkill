@@ -1,4 +1,4 @@
-import { SHOPS, SKILL_LEVELS } from "../types/game";
+import { REALMS, SKILL_LEVELS, classesForRealm, shopsForClass } from "../types/game";
 import type { CombatSkillInput } from "../types/planner";
 
 interface Props {
@@ -8,27 +8,60 @@ interface Props {
 }
 
 export default function SkillCard({ index, skill, onChange }: Props) {
+  const availableClasses = classesForRealm(skill.realm);
+  const availableShops = shopsForClass(skill.skillClass);
+
+  const handleRealmChange = (realm: typeof skill.realm) => {
+    const classes = classesForRealm(realm);
+    const cls = classes.includes(skill.skillClass) ? skill.skillClass : classes[0];
+    const shops = shopsForClass(cls);
+    const shop = shops.includes(skill.shop) ? skill.shop : shops[0];
+    onChange({ ...skill, realm, skillClass: cls, shop });
+  };
+
+  const handleClassChange = (cls: typeof skill.skillClass) => {
+    const shops = shopsForClass(cls);
+    const shop = shops.includes(skill.shop) ? skill.shop : shops[0];
+    onChange({ ...skill, skillClass: cls, shop });
+  };
+
   return (
     <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-bold text-amber-600">#{index + 1}</span>
-        <input
-          type="text"
-          placeholder="备注名称（可选）"
-          value={skill.label}
-          onChange={(e) => onChange({ ...skill, label: e.target.value })}
-          className="flex-1 text-sm border-b border-gray-200 focus:border-amber-500 outline-none py-1 bg-transparent"
-        />
-      </div>
+      <div className="text-sm font-bold text-amber-600 mb-3">神通 #{index + 1}</div>
       <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">境界</label>
+          <select
+            value={skill.realm}
+            onChange={(e) => handleRealmChange(e.target.value as typeof skill.realm)}
+            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white focus:border-amber-500 outline-none"
+          >
+            {REALMS.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">职业</label>
+          <select
+            value={skill.skillClass}
+            onChange={(e) => handleClassChange(e.target.value as typeof skill.skillClass)}
+            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white focus:border-amber-500 outline-none"
+          >
+            {availableClasses.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">商店</label>
           <select
             value={skill.shop}
             onChange={(e) => onChange({ ...skill, shop: e.target.value as typeof skill.shop })}
-            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white focus:border-amber-500 outline-none"
+            disabled={availableShops.length === 1}
+            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white focus:border-amber-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
           >
-            {SHOPS.map((s) => (
+            {availableShops.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>

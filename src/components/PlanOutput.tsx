@@ -1,117 +1,147 @@
 import { useState } from "react";
-import type { PlannerOutput, WeekPlan } from "../types/planner";
-import type { CombatSkillInput } from "../types/planner";
+import type { PlannerOutput, WeekPlan, CombatSkillInput } from "../types/planner";
+import { skillDisplayName } from "../types/planner";
 
 interface Props {
   output: PlannerOutput;
-  skillLabels: CombatSkillInput[];
+  skills: CombatSkillInput[];
 }
 
-function skillName(skills: CombatSkillInput[], idx: number): string {
-  const s = skills[idx];
-  return s.label || `神通${idx + 1}(${s.shop})`;
+function name(skills: CombatSkillInput[], idx: number): string {
+  return skillDisplayName(skills[idx]);
 }
 
 function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[] }) {
-  const [open, setOpen] = useState(week.week <= 4);
+  const [open, setOpen] = useState(week.week <= 3);
 
-  const title = week.week === 0
-    ? "初始资源分配"
-    : week.upgrades.length === 0 && week.conversions.length === 0 && week.acquisitions.length === 0
-      ? `第 ${week.week} 周（积累资源）`
-      : `第 ${week.week} 周`;
+  const hasContent = week.acquisitions.length > 0
+    || week.conversions.length > 0
+    || week.upgrades.length > 0;
 
-  const isBonus = week.acquisitions.length === 0 && week.conversions.length === 0 && week.upgrades.length > 0 && week.week > 0;
+  const isInitial = week.week === 0;
+  const isBonus = !isInitial && week.acquisitions.length === 0 && week.conversions.length === 0 && week.upgrades.length > 0;
+
+  let title: string;
+  if (isInitial) title = "立即可做";
+  else if (isBonus) title = "目标达成后 · 剩余资源分配";
+  else if (!hasContent) title = `第 ${week.week} 周 · 积累资源`;
+  else title = `第 ${week.week} 周`;
+
+  const upgradeCount = week.upgrades.length;
+  const conversionCount = week.conversions.length;
 
   return (
-    <div className="border border-gray-200 rounded-lg bg-white shadow-sm">
+    <div className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <span>{isBonus ? "剩余资源分配" : title}</span>
-          {week.upgrades.length > 0 && (
-            <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
-              {week.upgrades.length} 次升级
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-medium text-gray-800">{title}</span>
+          {upgradeCount > 0 && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+              升级 ×{upgradeCount}
             </span>
           )}
-          {week.conversions.length > 0 && (
-            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-              {week.conversions.length} 次转换
+          {conversionCount > 0 && (
+            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              转换 ×{conversionCount}
             </span>
           )}
         </div>
-        <span className={`transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
+        <span className={`text-gray-400 text-xs transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
       </button>
+
       {open && (
-        <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
-          {/* 商店获取 */}
-          {week.acquisitions.length > 0 && (
-            <div>
-              <h4 className="text-xs font-medium text-gray-500 mb-1.5">📥 商店获取</h4>
-              {week.acquisitions.map((a, i) => (
-                <div key={i} className="text-sm text-gray-600 ml-2">
-                  {a.shop}：+{a.pages} 书页 →{" "}
-                  {a.targetSkillIndex !== null
-                    ? skillName(skills, a.targetSkillIndex)
-                    : "非战斗池"}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 转换 */}
-          {week.conversions.length > 0 && (
-            <div>
-              <h4 className="text-xs font-medium text-gray-500 mb-1.5">🔄 转换操作</h4>
-              {week.conversions.map((c, i) => (
-                <div key={i} className="text-sm text-gray-600 ml-2">
-                  {c.shop}池 → {skillName(skills, c.targetSkillIndex)} ({c.pages}张)
-                  {c.usedStone && <span className="text-amber-600 ml-1">⬥转换石</span>}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 升级 */}
-          {week.upgrades.length > 0 && (
-            <div>
-              <h4 className="text-xs font-medium text-gray-500 mb-1.5">⬆️ 升级操作</h4>
-              {week.upgrades.map((u, i) => (
-                <div key={i} className="text-sm ml-2 space-y-0.5">
-                  <div className="text-gray-800 font-medium">
-                    {skillName(skills, u.skillIndex)}: {u.fromLevel} → {u.toLevel}
+        <div className="px-4 pb-4 border-t border-gray-100">
+          {/* 操作步骤 */}
+          <div className="mt-3 space-y-3">
+            {/* 获取 */}
+            {week.acquisitions.length > 0 && (
+              <div>
+                <div className="text-xs font-medium text-gray-500 mb-1.5">第一步：领取书页</div>
+                {week.acquisitions.map((a, i) => (
+                  <div key={i} className="text-sm text-gray-700 ml-3 leading-relaxed">
+                    从<span className="font-medium text-amber-600">「{a.shop}」</span>商店领取 {a.pages} 张书页，
+                    {a.targetSkillIndex !== null
+                      ? <>给 <span className="font-medium">{name(skills, a.targetSkillIndex)}</span></>
+                      : <span className="text-gray-500">存入非战斗池备用</span>}
                   </div>
-                  <div className="text-xs text-gray-400">
-                    本体 {u.selfPagesUsed}
-                    {u.purplePagesUsed > 0 && ` · 紫 ${u.purplePagesUsed}`}
-                    {u.bluePagesUsed > 0 && ` · 蓝 ${u.bluePagesUsed}`}
-                    {Object.entries(u.otherPagesConsumed)
-                      .filter(([, v]) => (v as number) > 0)
-                      .map(([k, v]) => ` · ${k}池 ${v}`)
-                      .join("")}
-                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 转换 */}
+            {week.conversions.length > 0 && (
+              <div>
+                <div className="text-xs font-medium text-gray-500 mb-1.5">
+                  {week.acquisitions.length > 0 ? "第二步" : "第一步"}：转换书页
                 </div>
-              ))}
-            </div>
-          )}
+                {week.conversions.map((c, i) => (
+                  <div key={i} className="text-sm text-gray-700 ml-3 leading-relaxed">
+                    从「{c.shop}」非战斗池中取 {c.pages} 张，转换给{" "}
+                    <span className="font-medium">{name(skills, c.targetSkillIndex)}</span>
+                    {c.usedStone && <span className="ml-1 text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">消耗转换石</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* 升级 */}
+            {week.upgrades.length > 0 && (
+              <div>
+                <div className="text-xs font-medium text-gray-500 mb-1.5">
+                  {week.acquisitions.length > 0 && week.conversions.length > 0
+                    ? "第三步"
+                    : week.acquisitions.length > 0 || week.conversions.length > 0
+                      ? "第二步"
+                      : "操作"}：升级神通
+                </div>
+                {week.upgrades.map((u, i) => {
+                  const otherEntries = Object.entries(u.otherPagesConsumed).filter(([, v]) => (v as number) > 0);
+                  return (
+                    <div key={i} className="ml-3 mb-2">
+                      <div className="text-sm text-gray-800">
+                        <span className="font-medium">{name(skills, u.skillIndex)}</span>{" "}
+                        <span className="text-gray-400">{u.fromLevel}</span>{" "}
+                        <span className="text-gray-400">→</span>{" "}
+                        <span className="font-medium text-green-600">{u.toLevel}</span>
+                      </div>
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        消耗：本体 {u.selfPagesUsed} 张
+                        {otherEntries.length > 0 && (
+                          <>，仙品 {otherEntries.map(([shop, v]) => `${shop}池${v}张`).join("、")}</>
+                        )}
+                        {u.purplePagesUsed > 0 && <>，紫色 {u.purplePagesUsed}</>}
+                        {u.bluePagesUsed > 0 && <>，蓝色 {u.bluePagesUsed}</>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {!hasContent && (
+              <div className="text-sm text-gray-400 italic mt-2">本周无操作，等待下周资源积累</div>
+            )}
+          </div>
 
           {/* 状态快照 */}
-          <div className="pt-2 border-t border-gray-100">
-            <h4 className="text-xs font-medium text-gray-500 mb-1.5">📊 当前状态</h4>
-            <div className="grid grid-cols-3 gap-2 text-xs text-gray-500">
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="text-xs font-medium text-gray-500 mb-2">本周结束后的状态</div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1">
               {week.snapshot.skillLevels.map((lv, i) => (
-                <div key={i}>
-                  {skillName(skills, i)}: <span className="font-medium text-gray-700">{lv}</span>
+                <div key={i} className="text-xs text-gray-600">
+                  {name(skills, i)}：
+                  <span className="font-medium text-gray-800">{lv}</span>
                   {week.snapshot.skillPages[i] > 0 && (
-                    <span className="text-gray-400"> +{week.snapshot.skillPages[i]}页</span>
+                    <span className="text-gray-400">（余 {week.snapshot.skillPages[i]} 页）</span>
                   )}
                 </div>
               ))}
             </div>
-            <div className="mt-1 text-xs text-gray-400">
-              紫 {week.snapshot.purplePages} · 蓝 {week.snapshot.bluePages}
+            <div className="mt-1.5 text-xs text-gray-400">
+              紫色 {week.snapshot.purplePages} · 蓝色 {week.snapshot.bluePages}
               {week.snapshot.conversionStonesLeft > 0 &&
                 ` · 转换石 ${week.snapshot.conversionStonesLeft}`}
             </div>
@@ -122,43 +152,41 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
   );
 }
 
-export default function PlanOutput({ output, skillLabels }: Props) {
-  if (!output.feasible && output.unreachableReasons.length > 0) {
-    return (
-      <div className="space-y-4">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-amber-800 mb-2">⚠ 部分目标不可达</h3>
-          {output.unreachableReasons.map((r, i) => (
-            <p key={i} className="text-sm text-amber-700">{r}</p>
-          ))}
-        </div>
-        <h3 className="text-sm font-medium text-gray-700">以下为最佳方案：</h3>
-        {output.weeks.map((w) => (
-          <WeekCard key={w.week} week={w} skills={skillLabels} />
-        ))}
-      </div>
-    );
-  }
+export default function PlanOutput({ output, skills }: Props) {
+  const totalWeeks = output.weeks.length > 0 ? output.weeks[output.weeks.length - 1].week : 0;
 
   return (
     <div className="space-y-3">
-      {/* 总览 */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <h3 className="text-sm font-medium text-green-800 mb-2">
-          ✓ 规划完成 — 共 {output.weeks.length > 0 ? output.weeks[output.weeks.length - 1].week : 0} 周
-        </h3>
-        <div className="flex flex-wrap gap-3">
-          {output.finalLevels.map((lv, i) => (
-            <span key={i} className="text-sm text-green-700">
-              {skillName(skillLabels, i)}: <span className="font-bold">{lv}</span>
-            </span>
+      {/* 不可达提示 */}
+      {!output.feasible && output.unreachableReasons.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="text-sm font-medium text-amber-800 mb-2">部分目标无法达成</div>
+          {output.unreachableReasons.map((r, i) => (
+            <p key={i} className="text-sm text-amber-700 leading-relaxed">{r}</p>
           ))}
+          <p className="text-xs text-amber-600 mt-2">以下为当前资源下的最佳方案：</p>
         </div>
-      </div>
+      )}
+
+      {/* 成功总览 */}
+      {output.feasible && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="text-sm font-medium text-green-800 mb-2">
+            规划完成，共需 {totalWeeks} 周
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            {output.finalLevels.map((lv, i) => (
+              <span key={i} className="text-sm text-green-700">
+                {name(skills, i)}：<span className="font-bold">{lv}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 每周详情 */}
       {output.weeks.map((w) => (
-        <WeekCard key={w.week} week={w} skills={skillLabels} />
+        <WeekCard key={w.week} week={w} skills={skills} />
       ))}
     </div>
   );

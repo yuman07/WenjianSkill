@@ -1,26 +1,41 @@
-import type { Shop, SkillLevel } from "./game";
+import type { Realm, Shop, SkillClass, SkillLevel } from "./game";
 
-/** 单个战斗神通输入 */
+/** 单个战斗神通输入（前端用，包含境界和职业用于显示） */
 export interface CombatSkillInput {
+  realm: Realm;
+  skillClass: SkillClass;
   shop: Shop;
   currentLevel: SkillLevel;
-  remainingPages: number; // 当前剩余本体书页（40 的整数倍）
+  remainingPages: number;
   targetLevel: SkillLevel;
-  label: string; // 备注名称
+}
+
+/** 生成显示名称 */
+export function skillDisplayName(s: CombatSkillInput): string {
+  return `${s.realm}·${s.skillClass}·${s.shop}`;
+}
+
+/** 发给 Rust 后端的输入（label 由前端自动生成） */
+export interface PlannerBackendSkill {
+  shop: Shop;
+  currentLevel: SkillLevel;
+  remainingPages: number;
+  targetLevel: SkillLevel;
+  label: string;
 }
 
 /** 高级设置 */
 export interface AdvancedSettings {
   conversionStones: number;
-  nonCombatPools: Record<Shop, number>; // 每商店非战斗书页池
-  weeklyShopIncome: Record<Shop, number>; // 每商店每周获取次数（默认 1）
+  nonCombatPools: Record<Shop, number>;
+  weeklyShopIncome: Record<Shop, number>;
   weeklyPurpleIncome: number;
   weeklyBlueIncome: number;
 }
 
-/** 完整的规划输入 */
+/** 完整的规划输入（发给后端） */
 export interface PlannerInput {
-  combatSkills: CombatSkillInput[];
+  combatSkills: PlannerBackendSkill[];
   purplePages: number;
   bluePages: number;
   advanced: AdvancedSettings;
@@ -40,11 +55,12 @@ export function defaultAdvancedSettings(): AdvancedSettings {
 /** 默认战斗神通 */
 export function defaultCombatSkill(): CombatSkillInput {
   return {
+    realm: "人界一",
+    skillClass: "剑",
     shop: "论剑",
     currentLevel: "1星",
     remainingPages: 0,
     targetLevel: "天1",
-    label: "",
   };
 }
 
@@ -70,8 +86,8 @@ export interface UpgradeAction {
 /** 每周的商店获取推荐 */
 export interface ShopAcquisition {
   shop: Shop;
-  targetSkillIndex: number | null; // null 表示进入非战斗池
-  pages: number; // 获取的书页数量（通常 40 × 次数）
+  targetSkillIndex: number | null;
+  pages: number;
 }
 
 /** 单周规划 */
@@ -80,7 +96,6 @@ export interface WeekPlan {
   acquisitions: ShopAcquisition[];
   conversions: ConversionAction[];
   upgrades: UpgradeAction[];
-  /** 本周结束后的状态快照 */
   snapshot: {
     skillLevels: SkillLevel[];
     skillPages: number[];
@@ -95,6 +110,6 @@ export interface WeekPlan {
 export interface PlannerOutput {
   feasible: boolean;
   weeks: WeekPlan[];
-  unreachableReasons: string[]; // 不可达时的原因说明
+  unreachableReasons: string[];
   finalLevels: SkillLevel[];
 }
