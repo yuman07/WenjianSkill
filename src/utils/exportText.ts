@@ -35,7 +35,7 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
     for (const a of week.acquisitions) {
       const target = a.targetSkillIndex !== null
         ? n(skills, a.targetSkillIndex)
-        : "非战斗池";
+        : "狗粮池";
       lines.push(`     - 从「${a.shop}」商店兑换 ${a.pages} 张 → ${target}`);
     }
     lines.push("");
@@ -46,7 +46,7 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
     step++;
     for (const c of week.conversions) {
       const stone = c.usedStone ? "（消耗转换石）" : "";
-      lines.push(`     - 从「${c.shop}」非战斗池取 ${c.pages} 张 → ${n(skills, c.targetSkillIndex)}${stone}`);
+      lines.push(`     - 从「${c.shop}」狗粮池取 ${c.pages} 张 → ${n(skills, c.targetSkillIndex)}${stone}`);
     }
     lines.push("");
   }
@@ -59,7 +59,7 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
       costs.push(`本体${u.selfPagesUsed}张`);
       const otherEntries = Object.entries(u.otherPagesConsumed).filter(([, v]) => (v as number) > 0);
       if (otherEntries.length > 0) {
-        costs.push(`仙品: ${otherEntries.map(([shop, v]) => `${shop}池${v}张`).join("、")}`);
+        costs.push(`仙品: ${otherEntries.map(([shop, v]) => `${shop}狗粮${v}张`).join("、")}`);
       }
       if (u.purplePagesUsed > 0) costs.push(`紫色${u.purplePagesUsed}`);
       if (u.bluePagesUsed > 0) costs.push(`蓝色${u.bluePagesUsed}`);

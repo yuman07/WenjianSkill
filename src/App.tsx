@@ -122,9 +122,9 @@ export default function App() {
               </div>
             </div>
 
-            {/* 非战斗书页池 */}
+            {/* 狗粮池 */}
             <div>
-              <label className="block text-xs text-gray-500 mb-2">非战斗神通书页池（按商店汇总，没有额外囤积可全填 0）</label>
+              <label className="block text-xs text-gray-500 mb-2">狗粮池（不用的神通书页，按商店汇总，没有额外囤积可全填 0）</label>
               <div className="grid grid-cols-5 gap-2">
                 {SHOPS.map((shop) => (
                   <div key={shop}>

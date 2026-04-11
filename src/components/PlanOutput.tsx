@@ -68,7 +68,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                     从<span className="font-medium text-amber-600">「{a.shop}」</span>商店兑换 {a.pages} 张书页，
                     {a.targetSkillIndex !== null
                       ? <>给 <span className="font-medium">{name(skills, a.targetSkillIndex)}</span></>
-                      : <span className="text-gray-500">存入非战斗池备用</span>}
+                      : <span className="text-gray-500">存入狗粮池备用</span>}
                   </div>
                 ))}
               </div>
@@ -82,7 +82,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                 </div>
                 {week.conversions.map((c, i) => (
                   <div key={i} className="text-sm text-gray-700 ml-3 leading-relaxed">
-                    从「{c.shop}」非战斗池中取 {c.pages} 张，转换给{" "}
+                    从「{c.shop}」狗粮池中取 {c.pages} 张，转换给{" "}
                     <span className="font-medium">{name(skills, c.targetSkillIndex)}</span>
                     {c.usedStone && <span className="ml-1 text-xs text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">消耗转换石</span>}
                   </div>
@@ -113,7 +113,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                       <div className="text-xs text-gray-400 mt-0.5">
                         消耗：本体 {u.selfPagesUsed} 张
                         {otherEntries.length > 0 && (
-                          <>，仙品 {otherEntries.map(([shop, v]) => `${shop}池${v}张`).join("、")}</>
+                          <>，仙品 {otherEntries.map(([shop, v]) => `${shop}狗粮${v}张`).join("、")}</>
                         )}
                         {u.purplePagesUsed > 0 && <>，紫色 {u.purplePagesUsed}</>}
                         {u.bluePagesUsed > 0 && <>，蓝色 {u.bluePagesUsed}</>}
