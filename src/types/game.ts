@@ -79,7 +79,8 @@ export type CostCategory =
   | "fanxu_triple"
   | "fanxu_baizu"
   | "heti_triple"
-  | "heti_baizu";
+  | "heti_baizu"
+  | "dacheng_baizu";
 
 /** 根据境界+职业确定消耗分类 */
 export function getCostCategory(realm: Realm, cls: SkillClass): CostCategory {
@@ -92,7 +93,8 @@ export function getCostCategory(realm: Realm, cls: SkillClass): CostCategory {
   }
   // 合体/大乘/渡劫
   if (isTriple) return "heti_triple";
-  return "heti_baizu"; // 渡劫没有百族，但防御性处理
+  if (realm === "大乘") return "dacheng_baizu";
+  return "heti_baizu"; // 合体百族（渡劫没有百族，防御性归入此处）
 }
 
 /**
@@ -187,20 +189,41 @@ const COSTS_HETI_BAIZU: UpgradeCost[] = [
   { selfPages: 280, otherPages: 760, purplePages: 1200, bluePages: 2800 },
 ];
 
+/**
+ * Table 6: 大乘 百族 (大乘 + 百族, max 天5 = 13 levels)
+ * 1星→天3 同合体百族，新增天3→天4、天4→天5
+ */
+const COSTS_DACHENG_BAIZU: UpgradeCost[] = [
+  { selfPages: 0,   otherPages: 160, purplePages: 100,  bluePages: 300 },
+  { selfPages: 0,   otherPages: 160, purplePages: 150,  bluePages: 350 },
+  { selfPages: 40,  otherPages: 200, purplePages: 250,  bluePages: 600 },
+  { selfPages: 80,  otherPages: 200, purplePages: 300,  bluePages: 800 },
+  { selfPages: 80,  otherPages: 280, purplePages: 450,  bluePages: 1100 },
+  { selfPages: 80,  otherPages: 360, purplePages: 500,  bluePages: 1300 },
+  { selfPages: 120, otherPages: 440, purplePages: 600,  bluePages: 1600 },
+  { selfPages: 160, otherPages: 520, purplePages: 750,  bluePages: 1900 },
+  { selfPages: 200, otherPages: 600, purplePages: 900,  bluePages: 2200 },
+  { selfPages: 240, otherPages: 680, purplePages: 1000, bluePages: 2500 },
+  { selfPages: 280, otherPages: 760, purplePages: 1200, bluePages: 2800 },
+  { selfPages: 320, otherPages: 840, purplePages: 1400, bluePages: 3100 },
+  { selfPages: 360, otherPages: 920, purplePages: 1600, bluePages: 3400 },
+];
+
 /** 根据分类获取消耗表 */
 export function getUpgradeCosts(cat: CostCategory): UpgradeCost[] {
   switch (cat) {
-    case "renjie_triple": return COSTS_RENJIE_TRIPLE;
-    case "fanxu_triple":  return COSTS_FANXU_TRIPLE;
-    case "fanxu_baizu":   return COSTS_FANXU_BAIZU;
-    case "heti_triple":   return COSTS_HETI_TRIPLE;
-    case "heti_baizu":    return COSTS_HETI_BAIZU;
+    case "renjie_triple":  return COSTS_RENJIE_TRIPLE;
+    case "fanxu_triple":   return COSTS_FANXU_TRIPLE;
+    case "fanxu_baizu":    return COSTS_FANXU_BAIZU;
+    case "heti_triple":    return COSTS_HETI_TRIPLE;
+    case "heti_baizu":     return COSTS_HETI_BAIZU;
+    case "dacheng_baizu":  return COSTS_DACHENG_BAIZU;
   }
 }
 
 /** 根据分类获取最大等级 */
 export function maxLevelForCategory(cat: CostCategory): SkillLevel {
-  return cat === "heti_triple" ? "天5" : "天3";
+  return (cat === "heti_triple" || cat === "dacheng_baizu") ? "天5" : "天3";
 }
 
 /** 根据境界+职业获取最大等级 */

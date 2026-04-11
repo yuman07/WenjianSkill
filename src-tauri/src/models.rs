@@ -42,6 +42,7 @@ pub enum CostCategory {
     FanxuBaizu,
     HetiTriple,
     HetiBaizu,
+    DachengBaizu,
 }
 
 pub fn cost_category(realm: Realm, skill_class: SkillClass) -> CostCategory {
@@ -49,8 +50,10 @@ pub fn cost_category(realm: Realm, skill_class: SkillClass) -> CostCategory {
         (Realm::RenJie1 | Realm::RenJie2, _) => CostCategory::RenjieTriple,
         (Realm::FanXu, true)  => CostCategory::FanxuTriple,
         (Realm::FanXu, false) => CostCategory::FanxuBaizu,
-        (Realm::HeTi | Realm::DaCheng | Realm::DuJie, true)  => CostCategory::HetiTriple,
-        (Realm::HeTi | Realm::DaCheng | Realm::DuJie, false) => CostCategory::HetiBaizu,
+        (Realm::HeTi | Realm::DuJie, true)  => CostCategory::HetiTriple,
+        (Realm::DaCheng, true) => CostCategory::HetiTriple,
+        (Realm::DaCheng, false) => CostCategory::DachengBaizu,
+        (Realm::HeTi | Realm::DuJie, false) => CostCategory::HetiBaizu,
     }
 }
 
@@ -269,21 +272,39 @@ pub const COSTS_HETI_BAIZU: [UpgradeCost; 11] = [
     UpgradeCost { self_pages: 280, other_pages: 760, purple_pages: 1200, blue_pages: 2800 },
 ];
 
+/// Table 6: 大乘 百族 (大乘 + 百族, max 天5 = 13 levels)
+pub const COSTS_DACHENG_BAIZU: [UpgradeCost; 13] = [
+    UpgradeCost { self_pages: 0,   other_pages: 160, purple_pages: 100,  blue_pages: 300 },
+    UpgradeCost { self_pages: 0,   other_pages: 160, purple_pages: 150,  blue_pages: 350 },
+    UpgradeCost { self_pages: 40,  other_pages: 200, purple_pages: 250,  blue_pages: 600 },
+    UpgradeCost { self_pages: 80,  other_pages: 200, purple_pages: 300,  blue_pages: 800 },
+    UpgradeCost { self_pages: 80,  other_pages: 280, purple_pages: 450,  blue_pages: 1100 },
+    UpgradeCost { self_pages: 80,  other_pages: 360, purple_pages: 500,  blue_pages: 1300 },
+    UpgradeCost { self_pages: 120, other_pages: 440, purple_pages: 600,  blue_pages: 1600 },
+    UpgradeCost { self_pages: 160, other_pages: 520, purple_pages: 750,  blue_pages: 1900 },
+    UpgradeCost { self_pages: 200, other_pages: 600, purple_pages: 900,  blue_pages: 2200 },
+    UpgradeCost { self_pages: 240, other_pages: 680, purple_pages: 1000, blue_pages: 2500 },
+    UpgradeCost { self_pages: 280, other_pages: 760, purple_pages: 1200, blue_pages: 2800 },
+    UpgradeCost { self_pages: 320, other_pages: 840, purple_pages: 1400, blue_pages: 3100 },
+    UpgradeCost { self_pages: 360, other_pages: 920, purple_pages: 1600, blue_pages: 3400 },
+];
+
 /// 根据分类获取消耗表
 pub fn upgrade_costs_for_category(cat: CostCategory) -> &'static [UpgradeCost] {
     match cat {
-        CostCategory::RenjieTriple => &COSTS_RENJIE_TRIPLE,
-        CostCategory::FanxuTriple  => &COSTS_FANXU_TRIPLE,
-        CostCategory::FanxuBaizu   => &COSTS_FANXU_BAIZU,
-        CostCategory::HetiTriple   => &COSTS_HETI_TRIPLE,
-        CostCategory::HetiBaizu    => &COSTS_HETI_BAIZU,
+        CostCategory::RenjieTriple  => &COSTS_RENJIE_TRIPLE,
+        CostCategory::FanxuTriple   => &COSTS_FANXU_TRIPLE,
+        CostCategory::FanxuBaizu    => &COSTS_FANXU_BAIZU,
+        CostCategory::HetiTriple    => &COSTS_HETI_TRIPLE,
+        CostCategory::HetiBaizu     => &COSTS_HETI_BAIZU,
+        CostCategory::DachengBaizu  => &COSTS_DACHENG_BAIZU,
     }
 }
 
 /// 根据境界+职业获取最大等级
 pub fn max_level(realm: Realm, skill_class: SkillClass) -> SkillLevel {
     match cost_category(realm, skill_class) {
-        CostCategory::HetiTriple => SkillLevel::Tian5,
+        CostCategory::HetiTriple | CostCategory::DachengBaizu => SkillLevel::Tian5,
         _ => SkillLevel::Tian3,
     }
 }
