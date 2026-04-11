@@ -46,7 +46,7 @@ export function defaultAdvancedSettings(): AdvancedSettings {
   return {
     conversionStones: 0,
     nonCombatPools: { 论剑: 0, 诸天: 0, 宗门: 0, 道蕴: 0, 百族: 0 },
-    weeklyShopIncome: { 论剑: 1, 诸天: 1, 宗门: 1, 道蕴: 1, 百族: 1 },
+    weeklyShopIncome: { 论剑: 1, 诸天: 1, 宗门: 1, 道蕴: 1, 百族: 0 },
     weeklyPurpleIncome: 0,
     weeklyBlueIncome: 0,
   };
