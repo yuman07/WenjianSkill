@@ -118,7 +118,7 @@ export default function App() {
             {/* 狗粮池收入 */}
             <div>
               <label className="block text-xs text-gray-500 mb-2">狗粮池收入（非战斗神通的书页积累速度）</label>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {SHOPS.map((shop) => {
                   const fi = advanced.fodderIncome[shop];
                   const updateFI = (patch: Partial<FodderIncome>) => {
@@ -128,17 +128,17 @@ export default function App() {
                     });
                   };
                   return (
-                    <div key={shop} className="flex items-center gap-1.5 text-xs text-gray-500">
-                      <span className="w-8">{shop}</span>
-                      <span>每</span>
+                    <div key={shop} className="flex items-center gap-2 text-sm text-gray-600">
+                      <span className="w-10 text-gray-500 shrink-0">{shop}</span>
+                      <span className="text-gray-400">每</span>
                       <input type="number" min={1} value={fi.cycleWeeks}
                         onChange={(e) => updateFI({ cycleWeeks: Math.max(1, parseInt(e.target.value) || 1) })}
-                        className="w-10 text-center text-sm border border-gray-200 rounded px-1 py-0.5 focus:border-amber-500 outline-none" />
-                      <span>周获取</span>
+                        className="w-14 h-8 text-center border border-gray-200 rounded focus:border-amber-500 outline-none" />
+                      <span className="text-gray-400">周获取</span>
                       <input type="number" min={0} value={fi.batchCount}
                         onChange={(e) => updateFI({ batchCount: Math.max(0, parseInt(e.target.value) || 0) })}
-                        className="w-10 text-center text-sm border border-gray-200 rounded px-1 py-0.5 focus:border-amber-500 outline-none" />
-                      <span>本</span>
+                        className="w-14 h-8 text-center border border-gray-200 rounded focus:border-amber-500 outline-none" />
+                      <span className="text-gray-400">本</span>
                     </div>
                   );
                 })}

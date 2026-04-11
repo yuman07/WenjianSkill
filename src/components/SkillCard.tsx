@@ -32,84 +32,60 @@ export default function SkillCard({ index, skill, onChange }: Props) {
     onChange({ ...skill, shop, incomeCycleWeeks: income.cycleWeeks, incomeBatchCount: income.batchCount });
   };
 
+  const inputCls = "w-full h-8 text-sm border border-gray-200 rounded px-2 bg-white focus:border-amber-500 outline-none";
+  const disabledCls = "w-full h-8 text-sm border border-gray-200 rounded px-2 bg-gray-100 text-gray-500 outline-none";
+
   return (
     <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
       <div className="text-sm font-bold text-amber-600 mb-3">神通 #{index + 1}</div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2">
         <div>
           <label className="block text-xs text-gray-500 mb-1">境界</label>
-          <select
-            value={skill.realm}
-            onChange={(e) => handleRealmChange(e.target.value as typeof skill.realm)}
-            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white focus:border-amber-500 outline-none"
-          >
+          <select value={skill.realm} onChange={(e) => handleRealmChange(e.target.value as typeof skill.realm)} className={inputCls}>
             {REALMS.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">职业</label>
-          <select
-            value={skill.skillClass}
-            onChange={(e) => handleClassChange(e.target.value as typeof skill.skillClass)}
-            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white focus:border-amber-500 outline-none"
-          >
+          <select value={skill.skillClass} onChange={(e) => handleClassChange(e.target.value as typeof skill.skillClass)} className={inputCls}>
             {availableClasses.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">商店</label>
-          <select
-            value={skill.shop}
-            onChange={(e) => handleShopChange(e.target.value as typeof skill.shop)}
-            disabled={availableShops.length === 1}
-            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white focus:border-amber-500 outline-none disabled:bg-gray-100 disabled:text-gray-500"
-          >
+          <select value={skill.shop} onChange={(e) => handleShopChange(e.target.value as typeof skill.shop)}
+            disabled={availableShops.length === 1} className={availableShops.length === 1 ? disabledCls : inputCls}>
             {availableShops.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">当前等级</label>
-          <select
-            value={skill.currentLevel}
-            onChange={(e) => onChange({ ...skill, currentLevel: e.target.value as typeof skill.currentLevel })}
-            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white focus:border-amber-500 outline-none"
-          >
+          <select value={skill.currentLevel} onChange={(e) => onChange({ ...skill, currentLevel: e.target.value as typeof skill.currentLevel })} className={inputCls}>
             {SKILL_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">剩余本体书页</label>
-          <input
-            type="number" min={0} step={40} value={skill.remainingPages}
+          <label className="block text-xs text-gray-500 mb-1">剩余书页</label>
+          <input type="number" min={0} step={40} value={skill.remainingPages}
             onChange={(e) => onChange({ ...skill, remainingPages: Math.max(0, parseInt(e.target.value) || 0) })}
-            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 focus:border-amber-500 outline-none"
-          />
+            className={inputCls} />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">目标等级</label>
-          <select
-            value={skill.targetLevel}
-            onChange={(e) => onChange({ ...skill, targetLevel: e.target.value as typeof skill.targetLevel })}
-            className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 bg-white focus:border-amber-500 outline-none"
-          >
+          <select value={skill.targetLevel} onChange={(e) => onChange({ ...skill, targetLevel: e.target.value as typeof skill.targetLevel })} className={inputCls}>
             {SKILL_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
         </div>
       </div>
-      {/* 收入设置 */}
-      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-xs text-gray-500">
-        <span>每</span>
-        <input
-          type="number" min={1} value={skill.incomeCycleWeeks}
+      <div className="mt-2 pt-2 border-t border-gray-100 flex items-center gap-1.5 text-xs text-gray-500">
+        <span>本体兑换：每</span>
+        <input type="number" min={1} value={skill.incomeCycleWeeks}
           onChange={(e) => onChange({ ...skill, incomeCycleWeeks: Math.max(1, parseInt(e.target.value) || 1) })}
-          className="w-10 text-center text-sm border border-gray-200 rounded px-1 py-0.5 focus:border-amber-500 outline-none"
-        />
-        <span>周兑换</span>
-        <input
-          type="number" min={0} value={skill.incomeBatchCount}
+          className="w-10 h-6 text-center text-sm border border-gray-200 rounded focus:border-amber-500 outline-none" />
+        <span>周</span>
+        <input type="number" min={0} value={skill.incomeBatchCount}
           onChange={(e) => onChange({ ...skill, incomeBatchCount: Math.max(0, parseInt(e.target.value) || 0) })}
-          className="w-10 text-center text-sm border border-gray-200 rounded px-1 py-0.5 focus:border-amber-500 outline-none"
-        />
+          className="w-10 h-6 text-center text-sm border border-gray-200 rounded focus:border-amber-500 outline-none" />
         <span>本</span>
       </div>
     </div>
