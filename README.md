@@ -61,17 +61,47 @@
 
 ## 开发
 
+### 环境准备
+
+#### macOS
+
+1. 安装 [Xcode Command Line Tools](https://developer.apple.com/xcode/)（如果尚未安装）：
+   ```bash
+   xcode-select --install
+   ```
+2. 安装 [Rust](https://www.rust-lang.org/tools/install)：
+   ```bash
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   ```
+3. 安装 [Devbox](https://www.jetify.com/docs/devbox/installing_devbox/)：
+   ```bash
+   curl -fsSL https://get.jetify.com/devbox | bash
+   ```
+
+#### Windows
+
+1. 安装 [Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)，勾选「使用 C++ 的桌面开发」工作负载
+2. 安装 [Rust](https://www.rust-lang.org/tools/install)，下载并运行 `rustup-init.exe`
+3. 安装 [Node.js](https://nodejs.org/) (v24 LTS)
+
+### 构建与运行
+
 ```bash
-# 安装依赖
+# 安装前端依赖
 devbox run -- npm install
 
-# 开发模式
+# 开发模式（热重载）
 devbox run -- npm run tauri dev
 
-# 构建
+# 构建发布版本
+# macOS 生成 .dmg：
 devbox run -- npm run tauri build
+# Windows 生成便携式 .exe：
+devbox run -- npm run tauri build -- --no-bundle
 ```
+
+> Windows 用户如未安装 Devbox，可将上述命令中的 `devbox run --` 去掉，直接运行 `npm install`、`npm run tauri dev` 等。
 
 ## License
 
-MIT
+[MIT](LICENSE)
