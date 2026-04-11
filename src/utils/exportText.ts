@@ -1,5 +1,6 @@
 import type { PlannerOutput, WeekPlan, CombatSkillInput } from "../types/planner";
 import { skillDisplayName } from "../types/planner";
+import { SHOPS } from "../types/game";
 import { formatDonors } from "./donorLabel";
 
 function n(skills: CombatSkillInput[], idx: number): string {
@@ -19,9 +20,9 @@ function divider(): string {
 
 function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
   const lines: string[] = [];
-  const hasContent = week.incomes.length > 0 || week.conversions.length > 0 || week.upgrades.length > 0;
+  const hasContent = week.incomes.length > 0 || week.fodderIncomes.length > 0 || week.conversions.length > 0 || week.upgrades.length > 0;
   const isInitial = week.week === 0;
-  const isBonus = !isInitial && week.incomes.length === 0 && week.conversions.length === 0 && week.upgrades.length > 0;
+  const isBonus = !isInitial && week.incomes.length === 0 && week.fodderIncomes.length === 0 && week.conversions.length === 0 && week.upgrades.length > 0;
 
   if (isInitial) lines.push("【立即可做】");
   else if (isBonus) lines.push("【目标达成后 · 剩余资源分配】");
@@ -31,11 +32,14 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
 
   let step = 1;
 
-  if (week.incomes.length > 0) {
+  if (week.incomes.length > 0 || week.fodderIncomes.length > 0) {
     lines.push(`  ${step}. 兑换书页`);
     step++;
     for (const inc of week.incomes) {
       lines.push(`     - ${n(skills, inc.skillIndex)} +${inc.pages} 张本体书页`);
+    }
+    for (const fi of week.fodderIncomes) {
+      lines.push(`     - 「${fi.shop}」狗粮池 +${fi.pages} 张书页`);
     }
     lines.push("");
   }
@@ -83,6 +87,12 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
     lines.push(`    ${n(skills, i)}: ${week.snapshot.skillLevels[i]}${extra}`);
   }
   lines.push(`    紫色 ${week.snapshot.purplePages} / 蓝色 ${week.snapshot.bluePages}${week.snapshot.conversionStonesLeft > 0 ? ` / 转换石 ${week.snapshot.conversionStonesLeft}` : ""}`);
+  const fodderEntries = SHOPS.map((shop, i) =>
+    week.snapshot.fodderPools[i] > 0 ? `${shop} ${week.snapshot.fodderPools[i]}` : null
+  ).filter(Boolean);
+  if (fodderEntries.length > 0) {
+    lines.push(`    狗粮池: ${fodderEntries.join(" / ")}`);
+  }
 
   return lines.join("\n");
 }

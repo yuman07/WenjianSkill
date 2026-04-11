@@ -226,6 +226,7 @@ impl SimState {
             purple_pages: self.purple,
             blue_pages: self.blue,
             conversion_stones_left: self.stones,
+            fodder_pools: self.fodder_pools,
         }
     }
 
@@ -431,6 +432,7 @@ fn do_conversions_and_upgrades(
 fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekPlan {
     let n = state.levels.len();
     let mut incomes = Vec::new();
+    let mut fodder_incomes = Vec::new();
     let mut conversions = Vec::new();
     let mut upgrades = Vec::new();
 
@@ -448,6 +450,7 @@ fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekP
         let pages = input.advanced.fodder_income.pages_in_week(shop, week);
         if pages > 0 {
             state.fodder_pools[shop.index()] += pages;
+            fodder_incomes.push(FodderPoolIncome { shop, pages });
         }
     }
 
@@ -458,6 +461,7 @@ fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekP
     WeekPlan {
         week,
         incomes,
+        fodder_incomes,
         conversions,
         upgrades,
         snapshot: state.snapshot(),
@@ -493,8 +497,8 @@ pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
         do_conversions_and_upgrades(&mut state, free_conv, &mut conversions, &mut upgrades);
         if !conversions.is_empty() || !upgrades.is_empty() {
             weeks.push(WeekPlan {
-                week: 0, incomes: Vec::new(), conversions, upgrades,
-                snapshot: state.snapshot(),
+                week: 0, incomes: Vec::new(), fodder_incomes: Vec::new(),
+                conversions, upgrades, snapshot: state.snapshot(),
             });
         }
     }

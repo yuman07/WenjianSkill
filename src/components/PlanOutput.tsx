@@ -3,6 +3,7 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import type { PlannerOutput, WeekPlan, CombatSkillInput } from "../types/planner";
 import { skillDisplayName } from "../types/planner";
+import { SHOPS } from "../types/game";
 import { generatePlanText } from "../utils/exportText";
 import { formatDonors } from "../utils/donorLabel";
 
@@ -18,9 +19,9 @@ function name(skills: CombatSkillInput[], idx: number): string {
 function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[] }) {
   const [open, setOpen] = useState(week.week <= 3);
 
-  const hasContent = week.incomes.length > 0 || week.conversions.length > 0 || week.upgrades.length > 0;
+  const hasContent = week.incomes.length > 0 || week.fodderIncomes.length > 0 || week.conversions.length > 0 || week.upgrades.length > 0;
   const isInitial = week.week === 0;
-  const isBonus = !isInitial && week.incomes.length === 0 && week.conversions.length === 0 && week.upgrades.length > 0;
+  const isBonus = !isInitial && week.incomes.length === 0 && week.fodderIncomes.length === 0 && week.conversions.length === 0 && week.upgrades.length > 0;
 
   let title: string;
   if (isInitial) title = "立即可做";
@@ -50,12 +51,17 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
         <div className="px-4 pb-4 border-t border-gray-100">
           <div className="mt-3 space-y-3">
             {/* 收入 */}
-            {week.incomes.length > 0 && (
+            {(week.incomes.length > 0 || week.fodderIncomes.length > 0) && (
               <div>
                 <div className="text-xs font-medium text-gray-500 mb-1.5">第一步：兑换书页</div>
                 {week.incomes.map((inc, i) => (
                   <div key={i} className="text-sm text-gray-700 ml-3 leading-relaxed">
                     <span className="font-medium">{name(skills, inc.skillIndex)}</span> +{inc.pages} 张本体书页
+                  </div>
+                ))}
+                {week.fodderIncomes.map((fi, i) => (
+                  <div key={`f${i}`} className="text-sm text-gray-700 ml-3 leading-relaxed">
+                    <span className="font-medium">「{fi.shop}」狗粮池</span> +{fi.pages} 张书页
                   </div>
                 ))}
               </div>
@@ -65,7 +71,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
             {week.conversions.length > 0 && (
               <div>
                 <div className="text-xs font-medium text-gray-500 mb-1.5">
-                  {week.incomes.length > 0 ? "第二步" : "第一步"}：转换书页
+                  {week.incomes.length > 0 || week.fodderIncomes.length > 0 ? "第二步" : "第一步"}：转换书页
                 </div>
                 {week.conversions.map((c, i) => (
                   <div key={i} className="text-sm text-gray-700 ml-3 leading-relaxed">
@@ -81,8 +87,8 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
             {week.upgrades.length > 0 && (
               <div>
                 <div className="text-xs font-medium text-gray-500 mb-1.5">
-                  {week.incomes.length > 0 && week.conversions.length > 0 ? "第三步"
-                    : week.incomes.length > 0 || week.conversions.length > 0 ? "第二步"
+                  {(week.incomes.length > 0 || week.fodderIncomes.length > 0) && week.conversions.length > 0 ? "第三步"
+                    : (week.incomes.length > 0 || week.fodderIncomes.length > 0) || week.conversions.length > 0 ? "第二步"
                     : "操作"}：升级神通
                 </div>
                 {week.upgrades.map((u, i) => {
@@ -134,6 +140,13 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
               紫色 {week.snapshot.purplePages} · 蓝色 {week.snapshot.bluePages}
               {week.snapshot.conversionStonesLeft > 0 && ` · 转换石 ${week.snapshot.conversionStonesLeft}`}
             </div>
+            {week.snapshot.fodderPools.some(p => p > 0) && (
+              <div className="mt-1 text-xs text-gray-400">
+                狗粮池：{SHOPS.map((shop, i) =>
+                  week.snapshot.fodderPools[i] > 0 ? `${shop} ${week.snapshot.fodderPools[i]}` : null
+                ).filter(Boolean).join(" · ")}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -474,6 +474,12 @@ pub struct SkillIncome {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FodderPoolIncome {
+    pub shop: Shop,
+    pub pages: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StateSnapshot {
     #[serde(rename = "skillLevels")]
     pub skill_levels: Vec<SkillLevel>,
@@ -485,12 +491,17 @@ pub struct StateSnapshot {
     pub blue_pages: u32,
     #[serde(rename = "conversionStonesLeft")]
     pub conversion_stones_left: u32,
+    /// Per-shop fodder pool remaining pages [论剑, 诸天, 宗门, 道蕴, 百族]
+    #[serde(rename = "fodderPools")]
+    pub fodder_pools: [u32; 5],
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WeekPlan {
     pub week: u32,
     pub incomes: Vec<SkillIncome>,
+    #[serde(rename = "fodderIncomes")]
+    pub fodder_incomes: Vec<FodderPoolIncome>,
     pub conversions: Vec<ConversionAction>,
     pub upgrades: Vec<UpgradeAction>,
     pub snapshot: StateSnapshot,

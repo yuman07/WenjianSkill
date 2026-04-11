@@ -111,7 +111,7 @@ export default function App() {
 
         {/* 材料与设置 */}
         <section className="mb-6">
-          <h2 className="text-sm font-medium text-gray-700 mb-3">材料与设置</h2>
+          <h2 className="text-sm font-medium text-gray-700 mb-3">设置与材料</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-4">
             {/* 转换 */}
             <div className="grid grid-cols-2 gap-4">

@@ -108,10 +108,17 @@ export interface SkillIncome {
   pages: number;
 }
 
+/** 狗粮池收入 */
+export interface FodderPoolIncome {
+  shop: Shop;
+  pages: number;
+}
+
 /** 单周规划 */
 export interface WeekPlan {
   week: number;
   incomes: SkillIncome[];
+  fodderIncomes: FodderPoolIncome[];
   conversions: ConversionAction[];
   upgrades: UpgradeAction[];
   snapshot: {
@@ -120,6 +127,7 @@ export interface WeekPlan {
     purplePages: number;
     bluePages: number;
     conversionStonesLeft: number;
+    fodderPools: [number, number, number, number, number];
   };
 }
 
