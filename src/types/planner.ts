@@ -50,10 +50,10 @@ export function defaultCombatSkill(): CombatSkillInput {
 
 /** 单次转换操作 */
 export interface ConversionAction {
-  fromShopPool: boolean; // true=从非战斗池转, false=用转换石
   shop: Shop;
-  targetSkillIndex: number; // 目标战斗神通在 combatSkills 中的索引
+  targetSkillIndex: number;
   usedStone: boolean;
+  pages: number;
 }
 
 /** 单次升级操作 */
@@ -62,7 +62,7 @@ export interface UpgradeAction {
   fromLevel: SkillLevel;
   toLevel: SkillLevel;
   selfPagesUsed: number;
-  otherPagesUsed: Record<Shop, number>; // 每商店池消耗的仙品书页
+  otherPagesConsumed: Record<Shop, number>;
   purplePagesUsed: number;
   bluePagesUsed: number;
 }
