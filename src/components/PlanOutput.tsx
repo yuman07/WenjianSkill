@@ -62,10 +62,10 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
             {/* 获取 */}
             {week.acquisitions.length > 0 && (
               <div>
-                <div className="text-xs font-medium text-gray-500 mb-1.5">第一步：领取书页</div>
+                <div className="text-xs font-medium text-gray-500 mb-1.5">第一步：兑换书页</div>
                 {week.acquisitions.map((a, i) => (
                   <div key={i} className="text-sm text-gray-700 ml-3 leading-relaxed">
-                    从<span className="font-medium text-amber-600">「{a.shop}」</span>商店领取 {a.pages} 张书页，
+                    从<span className="font-medium text-amber-600">「{a.shop}」</span>商店兑换 {a.pages} 张书页，
                     {a.targetSkillIndex !== null
                       ? <>给 <span className="font-medium">{name(skills, a.targetSkillIndex)}</span></>
                       : <span className="text-gray-500">存入非战斗池备用</span>}

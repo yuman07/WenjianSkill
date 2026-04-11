@@ -30,13 +30,13 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
   let step = 1;
 
   if (week.acquisitions.length > 0) {
-    lines.push(`  ${step}. 领取书页`);
+    lines.push(`  ${step}. 兑换书页`);
     step++;
     for (const a of week.acquisitions) {
       const target = a.targetSkillIndex !== null
         ? n(skills, a.targetSkillIndex)
         : "非战斗池";
-      lines.push(`     - 从「${a.shop}」商店领取 ${a.pages} 张 → ${target}`);
+      lines.push(`     - 从「${a.shop}」商店兑换 ${a.pages} 张 → ${target}`);
     }
     lines.push("");
   }
