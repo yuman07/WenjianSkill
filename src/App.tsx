@@ -115,7 +115,10 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold text-gray-800 mb-1">问剑长生 · 神通规划</h1>
+        <div className="flex items-baseline gap-2 mb-1">
+          <h1 className="text-xl font-bold text-gray-800">问剑长生 · 神通规划</h1>
+          <span className="text-xs text-gray-400">v1.0.0</span>
+        </div>
         <p className="text-sm text-gray-500 mb-6">选择 6 个战斗神通，设定目标等级，生成最优升级路径</p>
 
         {/* 战斗神通 */}
@@ -250,6 +253,11 @@ export default function App() {
             <PlanOutput output={output} skills={skills} />
           </section>
         )}
+
+        <footer className="mt-8 pb-4 text-center text-xs text-gray-400">
+          <a href="https://github.com/yuman07/WenjianSkill" target="_blank" rel="noopener noreferrer"
+            className="hover:text-gray-600 transition-colors">GitHub</a>
+        </footer>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 [package]
 name = "wenjian-skill"
-version = "0.1.0"
+version = "1.0.0"
 description = "问剑长生 - 神通升级规划工具"
 authors = []
 license = "MIT"
