@@ -41,7 +41,7 @@ export default function App() {
   }, []);
 
   // Auto-save when any input changes (debounced)
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const debouncedSave = useCallback(() => {
     if (!initialized.current) return;
     clearTimeout(saveTimer.current);

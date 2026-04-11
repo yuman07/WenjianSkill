@@ -14,7 +14,7 @@ let storePromise: ReturnType<typeof load> | null = null;
 
 function getStore() {
   if (!storePromise) {
-    storePromise = load(STORE_FILE, { autoSave: true });
+    storePromise = load(STORE_FILE, { autoSave: true, defaults: {} });
   }
   return storePromise;
 }
