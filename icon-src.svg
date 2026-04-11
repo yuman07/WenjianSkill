@@ -14,14 +14,11 @@
       <stop offset="0%" style="stop-color:#f59e0b"/>
       <stop offset="100%" style="stop-color:#d97706"/>
     </linearGradient>
-    <linearGradient id="scroll" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#f5e6c8"/>
-      <stop offset="100%" style="stop-color:#d4b896"/>
-    </linearGradient>
-    <linearGradient id="roller" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#8b6c42"/>
-      <stop offset="50%" style="stop-color:#a07850"/>
-      <stop offset="100%" style="stop-color:#6b5030"/>
+    <linearGradient id="bamboo" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8b7355"/>
+      <stop offset="30%" style="stop-color:#a08968"/>
+      <stop offset="70%" style="stop-color:#9c8560"/>
+      <stop offset="100%" style="stop-color:#7a6548"/>
     </linearGradient>
   </defs>
 
@@ -29,79 +26,61 @@
   <circle cx="256" cy="256" r="240" fill="url(#bg)"/>
   <circle cx="256" cy="256" r="230" fill="none" stroke="#f59e0b" stroke-width="3" opacity="0.4"/>
 
-  <!-- === Scroll (卷轴) === -->
-  <g transform="translate(256,290) rotate(-8)">
-    <!-- Unrolled scroll body -->
-    <rect x="-70" y="-55" width="140" height="95" rx="2" fill="url(#scroll)" opacity="0.92"/>
+  <!-- === Bamboo Slips (竹简) === -->
+  <g transform="translate(248,285) rotate(-8)">
+    <!-- Individual bamboo strips (竹片) -->
+    <rect x="-65" y="-50" width="10" height="90" rx="1.5" fill="url(#bamboo)" opacity="0.85"/>
+    <rect x="-52" y="-50" width="10" height="90" rx="1.5" fill="#9c8560" opacity="0.9"/>
+    <rect x="-39" y="-50" width="10" height="90" rx="1.5" fill="url(#bamboo)" opacity="0.88"/>
+    <rect x="-26" y="-50" width="10" height="90" rx="1.5" fill="#9c8560" opacity="0.85"/>
+    <rect x="-13" y="-50" width="10" height="90" rx="1.5" fill="url(#bamboo)" opacity="0.9"/>
+    <rect x="0"   y="-50" width="10" height="90" rx="1.5" fill="#9c8560" opacity="0.87"/>
+    <rect x="13"  y="-50" width="10" height="90" rx="1.5" fill="url(#bamboo)" opacity="0.85"/>
+    <rect x="26"  y="-50" width="10" height="90" rx="1.5" fill="#9c8560" opacity="0.9"/>
+    <rect x="39"  y="-50" width="10" height="90" rx="1.5" fill="url(#bamboo)" opacity="0.88"/>
+    <rect x="52"  y="-50" width="10" height="90" rx="1.5" fill="#9c8560" opacity="0.85"/>
 
-    <!-- Vertical text lines on scroll (古代竖排书写) -->
-    <line x1="45" y1="-40" x2="45" y2="26" stroke="#8a7050" stroke-width="1.5" opacity="0.45"/>
-    <line x1="30" y1="-40" x2="30" y2="20" stroke="#8a7050" stroke-width="1.5" opacity="0.4"/>
-    <line x1="15" y1="-40" x2="15" y2="28" stroke="#8a7050" stroke-width="1.5" opacity="0.4"/>
-    <line x1="0" y1="-40" x2="0" y2="22" stroke="#8a7050" stroke-width="1.5" opacity="0.35"/>
-    <line x1="-15" y1="-40" x2="-15" y2="18" stroke="#8a7050" stroke-width="1.5" opacity="0.35"/>
-    <line x1="-30" y1="-40" x2="-30" y2="24" stroke="#8a7050" stroke-width="1.5" opacity="0.3"/>
-    <line x1="-45" y1="-40" x2="-45" y2="16" stroke="#8a7050" stroke-width="1.5" opacity="0.3"/>
+    <!-- Binding cords (编绳) -->
+    <line x1="-68" y1="-30" x2="65" y2="-30" stroke="#6b4c30" stroke-width="2.5" opacity="0.7"/>
+    <line x1="-68" y1="20"  x2="65" y2="20"  stroke="#6b4c30" stroke-width="2.5" opacity="0.7"/>
 
-    <!-- Top roller (木轴) -->
-    <rect x="-78" y="-62" width="156" height="12" rx="6" fill="url(#roller)"/>
-    <!-- Roller end caps -->
-    <circle cx="-78" cy="-56" r="8" fill="#6b5030"/>
-    <circle cx="-78" cy="-56" r="4" fill="#8b6c42"/>
-    <circle cx="78" cy="-56" r="8" fill="#6b5030"/>
-    <circle cx="78" cy="-56" r="4" fill="#8b6c42"/>
-
-    <!-- Bottom roller (partially rolled) -->
-    <rect x="-78" y="35" width="156" height="12" rx="6" fill="url(#roller)"/>
-    <!-- Roll curl effect -->
-    <ellipse cx="0" cy="46" rx="70" ry="8" fill="#c4a878" opacity="0.5"/>
-    <!-- Roller end caps -->
-    <circle cx="-78" cy="41" r="8" fill="#6b5030"/>
-    <circle cx="-78" cy="41" r="4" fill="#8b6c42"/>
-    <circle cx="78" cy="41" r="8" fill="#6b5030"/>
-    <circle cx="78" cy="41" r="4" fill="#8b6c42"/>
+    <!-- Text on strips (墨迹) -->
+    <line x1="-60" y1="-18" x2="-60" y2="10" stroke="#3a2a18" stroke-width="1.5" opacity="0.35"/>
+    <line x1="-47" y1="-20" x2="-47" y2="12" stroke="#3a2a18" stroke-width="1.5" opacity="0.3"/>
+    <line x1="-34" y1="-16" x2="-34" y2="8"  stroke="#3a2a18" stroke-width="1.5" opacity="0.35"/>
+    <line x1="-21" y1="-18" x2="-21" y2="14" stroke="#3a2a18" stroke-width="1.5" opacity="0.3"/>
+    <line x1="-8"  y1="-20" x2="-8"  y2="10" stroke="#3a2a18" stroke-width="1.5" opacity="0.35"/>
+    <line x1="5"   y1="-16" x2="5"   y2="12" stroke="#3a2a18" stroke-width="1.5" opacity="0.3"/>
+    <line x1="18"  y1="-18" x2="18"  y2="8"  stroke="#3a2a18" stroke-width="1.5" opacity="0.35"/>
+    <line x1="31"  y1="-20" x2="31"  y2="14" stroke="#3a2a18" stroke-width="1.5" opacity="0.3"/>
+    <line x1="44"  y1="-16" x2="44"  y2="10" stroke="#3a2a18" stroke-width="1.5" opacity="0.35"/>
+    <line x1="57"  y1="-18" x2="57"  y2="12" stroke="#3a2a18" stroke-width="1.5" opacity="0.3"/>
   </g>
 
-  <!-- === Chinese Sword (中式直剑) === -->
-  <g transform="translate(268,215) rotate(32)">
-    <!-- Blade - straight, parallel edges, narrow (直剑特征) -->
-    <polygon points="-5,-155 5,-155 6,-20 -6,-20" fill="url(#blade)"/>
-    <!-- Blade tip - tapered point -->
-    <polygon points="-5,-155 0,-170 5,-155" fill="#dde4f0"/>
-    <!-- Center ridge (剑脊) -->
-    <line x1="0" y1="-168" x2="0" y2="-20" stroke="#f8faff" stroke-width="1.2" opacity="0.5"/>
-    <!-- Edge highlight -->
-    <line x1="-5.5" y1="-155" x2="-6.5" y2="-20" stroke="white" stroke-width="0.8" opacity="0.25"/>
-
-    <!-- Guard (剑格) - flat rectangular, Chinese style -->
+  <!-- === Chinese Sword (中式直剑) - moved down === -->
+  <g transform="translate(270,230) rotate(32)">
+    <polygon points="-5,-145 5,-145 6,-20 -6,-20" fill="url(#blade)"/>
+    <polygon points="-5,-145 0,-160 5,-145" fill="#dde4f0"/>
+    <line x1="0" y1="-158" x2="0" y2="-20" stroke="#f8faff" stroke-width="1.2" opacity="0.5"/>
+    <line x1="-5.5" y1="-145" x2="-6.5" y2="-20" stroke="white" stroke-width="0.8" opacity="0.25"/>
     <rect x="-22" y="-22" width="44" height="8" rx="2" fill="url(#glow)"/>
-    <!-- Guard decorative line -->
     <line x1="-18" y1="-18" x2="18" y2="-18" stroke="#b8860b" stroke-width="1" opacity="0.6"/>
-
-    <!-- Grip (剑柄) - wrapped with cord -->
     <rect x="-5" y="-14" width="10" height="42" rx="2" fill="#5c3a1e"/>
-    <!-- Cord wrapping (缠绳) -->
     <line x1="-5" y1="-6" x2="5" y2="-2" stroke="#7a5030" stroke-width="2.5"/>
     <line x1="-5" y1="2" x2="5" y2="6" stroke="#7a5030" stroke-width="2.5"/>
     <line x1="-5" y1="10" x2="5" y2="14" stroke="#7a5030" stroke-width="2.5"/>
     <line x1="-5" y1="18" x2="5" y2="22" stroke="#7a5030" stroke-width="2.5"/>
-
-    <!-- Pommel (剑首) - round disc style -->
     <circle cx="0" cy="32" r="9" fill="url(#glow)"/>
     <circle cx="0" cy="32" r="5" fill="#b8860b" opacity="0.6"/>
-
-    <!-- Tassel (剑穗) -->
     <path d="M5,38 Q12,50 8,68" stroke="#c0392b" stroke-width="2" fill="none" stroke-linecap="round"/>
     <path d="M3,38 Q8,52 5,70" stroke="#e74c3c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
     <path d="M7,38 Q15,48 12,65" stroke="#c0392b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
   </g>
 
   <!-- Sparkle effects -->
-  <circle cx="315" cy="120" r="3" fill="#f59e0b" opacity="0.8"/>
-  <circle cx="175" cy="160" r="2" fill="#fbbf24" opacity="0.6"/>
-  <circle cx="345" cy="180" r="2.5" fill="#f59e0b" opacity="0.7"/>
-  <circle cx="195" cy="110" r="2" fill="#fcd34d" opacity="0.5"/>
-  <!-- Sword qi glow -->
-  <circle cx="230" cy="100" r="4" fill="#e8eef6" opacity="0.3"/>
-  <circle cx="245" cy="85" r="3" fill="#e8eef6" opacity="0.2"/>
+  <circle cx="315" cy="130" r="3" fill="#f59e0b" opacity="0.8"/>
+  <circle cx="170" cy="170" r="2" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="340" cy="190" r="2.5" fill="#f59e0b" opacity="0.7"/>
+  <circle cx="190" cy="120" r="2" fill="#fcd34d" opacity="0.5"/>
+  <circle cx="235" cy="110" r="3.5" fill="#e8eef6" opacity="0.25"/>
 </svg>
