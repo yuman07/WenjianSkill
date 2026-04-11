@@ -211,54 +211,68 @@ pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
 
     // 生成不可达原因
     let mut unreachable_reasons = Vec::new();
-    if !state.all_targets_met() {
+    let feasible = state.all_targets_met();
+    if !feasible {
         for i in 0..n {
             if state.skill_levels[i] < state.skill_targets[i] {
-                let deficit = total_cost_between(state.skill_levels[i], state.skill_targets[i]);
-                let mut reasons = Vec::new();
-                if state.skill_pages[i] < deficit.self_pages {
-                    reasons.push(format!(
-                        "本体书页不足（还需{}，当前{}）",
-                        deficit.self_pages - state.skill_pages[i],
-                        state.skill_pages[i]
-                    ));
-                }
-                if state.non_combat_pools.total() < deficit.other_pages {
-                    reasons.push(format!(
-                        "仙品书页不足（还需{}，当前池总量{}）",
-                        deficit.other_pages,
-                        state.non_combat_pools.total()
-                    ));
-                }
-                if state.purple_pages < deficit.purple_pages {
-                    reasons.push(format!(
-                        "紫色书页不足（还需{}，当前{}）",
-                        deficit.purple_pages - state.purple_pages,
-                        state.purple_pages
-                    ));
-                }
-                if state.blue_pages < deficit.blue_pages {
-                    reasons.push(format!(
-                        "蓝色书页不足（还需{}，当前{}）",
-                        deficit.blue_pages - state.blue_pages,
-                        state.blue_pages
-                    ));
-                }
-                let label = format!("战斗神通 {}", i + 1);
+                let label = &input.combat_skills[i].label;
+                let cur = state.skill_levels[i].display_name();
+                let tgt = state.skill_targets[i].display_name();
+
+                // 找到下一次升级卡在哪里
+                let next_level = state.skill_levels[i].next();
+                let bottleneck = if let Some(nl) = next_level {
+                    let cost = &UPGRADE_COSTS[nl.index()];
+                    let mut issues = Vec::new();
+                    if state.skill_pages[i] < cost.self_pages {
+                        issues.push(format!(
+                            "本体书页不足（需要{}，当前{}）",
+                            cost.self_pages, state.skill_pages[i]
+                        ));
+                    }
+                    if cost.other_pages > 0 && state.non_combat_pools.total() < cost.other_pages {
+                        issues.push(format!(
+                            "狗粮不足（需要{}，当前{}）",
+                            cost.other_pages, state.non_combat_pools.total()
+                        ));
+                    }
+                    if cost.purple_pages > 0 && state.purple_pages < cost.purple_pages {
+                        issues.push(format!(
+                            "紫色书页不足（需要{}，当前{}）",
+                            cost.purple_pages, state.purple_pages
+                        ));
+                    }
+                    if cost.blue_pages > 0 && state.blue_pages < cost.blue_pages {
+                        issues.push(format!(
+                            "蓝色书页不足（需要{}，当前{}）",
+                            cost.blue_pages, state.blue_pages
+                        ));
+                    }
+                    if issues.is_empty() {
+                        "资源不足".to_string()
+                    } else {
+                        issues.join("、")
+                    }
+                } else {
+                    "已达最高等级".to_string()
+                };
+
                 unreachable_reasons.push(format!(
-                    "{}: 目标 {:?} 未达成（当前 {:?}）- {}",
+                    "{}: 当前 {}，目标 {}，卡在 {} → {} 升级 — {}",
                     label,
-                    state.skill_targets[i],
-                    state.skill_levels[i],
-                    reasons.join("；")
+                    cur,
+                    tgt,
+                    cur,
+                    next_level.map_or("?".to_string(), |l| l.display_name().to_string()),
+                    bottleneck
                 ));
             }
         }
     }
 
     PlannerOutput {
-        feasible: state.all_targets_met(),
-        weeks,
+        feasible,
+        weeks: if feasible { weeks } else { Vec::new() },
         unreachable_reasons,
         final_levels: state.skill_levels.clone(),
     }

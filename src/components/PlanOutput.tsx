@@ -171,47 +171,46 @@ export default function PlanOutput({ output, skills }: Props) {
 
   return (
     <div className="space-y-3">
-      {/* 导出按钮 */}
-      <div className="flex justify-end">
-        <button
-          onClick={handleExport}
-          className="text-sm px-4 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 cursor-pointer"
-        >
-          导出 TXT
-        </button>
-      </div>
-
       {/* 不可达提示 */}
       {!output.feasible && output.unreachableReasons.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div className="text-sm font-medium text-amber-800 mb-2">部分目标无法达成</div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="text-sm font-medium text-red-800 mb-2">目标无法达成</div>
           {output.unreachableReasons.map((r, i) => (
-            <p key={i} className="text-sm text-amber-700 leading-relaxed">{r}</p>
+            <p key={i} className="text-sm text-red-700 leading-relaxed mt-1">{r}</p>
           ))}
-          <p className="text-xs text-amber-600 mt-2">以下为当前资源下的最佳方案：</p>
+          <p className="text-xs text-red-500 mt-3">请调整目标等级或补充对应材料后重试</p>
         </div>
       )}
 
-      {/* 成功总览 */}
+      {/* 成功总览 + 方案 */}
       {output.feasible && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="text-sm font-medium text-green-800 mb-2">
-            规划完成，共需 {totalWeeks} 周
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            {output.finalLevels.map((lv, i) => (
-              <span key={i} className="text-sm text-green-700">
-                {name(skills, i)}：<span className="font-bold">{lv}</span>
+        <>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-green-800">
+                规划完成，共需 {totalWeeks} 周
               </span>
-            ))}
+              <button
+                onClick={handleExport}
+                className="text-xs px-3 py-1 border border-green-300 rounded-lg hover:bg-green-100 transition-colors text-green-700 cursor-pointer"
+              >
+                导出 TXT
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {output.finalLevels.map((lv, i) => (
+                <span key={i} className="text-sm text-green-700">
+                  {name(skills, i)}：<span className="font-bold">{lv}</span>
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* 每周详情 */}
-      {output.weeks.map((w) => (
-        <WeekCard key={w.week} week={w} skills={skills} />
-      ))}
+          {output.weeks.map((w) => (
+            <WeekCard key={w.week} week={w} skills={skills} />
+          ))}
+        </>
+      )}
     </div>
   );
 }

@@ -99,6 +99,25 @@ impl SkillLevel {
         self as usize
     }
 
+    pub fn display_name(self) -> &'static str {
+        match self {
+            SkillLevel::Star1 => "1星",
+            SkillLevel::Star2 => "2星",
+            SkillLevel::Star3 => "3星",
+            SkillLevel::Xuan1 => "玄1",
+            SkillLevel::Xuan2 => "玄2",
+            SkillLevel::Xuan3 => "玄3",
+            SkillLevel::Di1 => "地1",
+            SkillLevel::Di2 => "地2",
+            SkillLevel::Di3 => "地3",
+            SkillLevel::Tian1 => "天1",
+            SkillLevel::Tian2 => "天2",
+            SkillLevel::Tian3 => "天3",
+            SkillLevel::Tian4 => "天4",
+            SkillLevel::Tian5 => "天5",
+        }
+    }
+
     pub fn next(self) -> Option<SkillLevel> {
         let i = self.index();
         if i + 1 < Self::ALL.len() {
