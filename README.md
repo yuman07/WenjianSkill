@@ -27,20 +27,22 @@
 
 前往 [Releases](https://github.com/yuman07/WenjianSkill/releases/latest) 页面下载对应平台的安装包。
 
-### macOS
+> 本应用未进行代码签名，首次运行时操作系统会弹出安全警告，请按照下方说明操作。
 
-1. 下载 `WenjianSkill_x.x.x_aarch64.dmg`
+### macOS 14.0+ (Sonoma) Apple Silicon
+
+1. 下载 `WenjianSkill_macOS14_arm64_1.0.0.dmg`
 2. 打开 DMG 文件，将应用拖入「应用程序」文件夹
-3. 首次打开如提示"无法验证开发者"，前往 **系统设置 → 隐私与安全性**，点击「仍要打开」即可
+3. 首次打开时，macOS Gatekeeper 会弹出"无法验证开发者"的提示。解决方法（任选其一）：
+   - 前往 **系统设置 → 隐私与安全性**，找到被拦截的应用，点击「仍要打开」
+   - 右键点击应用，选择「打开」，在弹出的对话框中再次点击「打开」
+   - 在终端中执行 `xattr -cr /Applications/WenjianSkill.app` 移除隔离属性后再打开
 
-> 仅支持 Apple Silicon (M 系列芯片) Mac。
+### Windows 10+ x64
 
-### Windows
-
-1. 下载 `wenjian-skill.exe`
-2. 双击即可运行，无需安装
-
-> 便携式应用，可放在任意目录。仅支持 64 位 Windows 10 及以上。
+1. 下载 `WenjianSkill_Win10_x64_1.0.0.exe`
+2. 双击即可运行，无需安装（便携式应用，可放在任意目录）
+3. 首次运行时，Windows SmartScreen 会弹出「Windows 已保护你的电脑」的提示，点击「更多信息」→「仍要运行」即可
 
 ## 算法说明
 
@@ -101,37 +103,72 @@
 
 项目使用 [Devbox](https://www.jetify.com/devbox/) 管理所有开发依赖（Node.js、Rust 等），无需手动安装各语言工具链。
 
-### 环境准备
+### 前置要求
 
-#### macOS
+#### macOS (Recommended)
 
-1. 安装 Xcode Command Line Tools（如果尚未安装）：
-   ```bash
-   xcode-select --install
-   ```
-2. 安装 [Devbox](https://www.jetify.com/docs/devbox/quickstart/)：
-   ```bash
-   curl -fsSL https://get.jetify.com/devbox | bash
-   ```
+- macOS 14.0 (Sonoma) 或更高版本，Apple Silicon (M 系列芯片)
+- Xcode Command Line Tools
 
 #### Windows
 
-1. 安装 [Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)，勾选「使用 C++ 的桌面开发」工作负载
-2. 安装 [Devbox](https://www.jetify.com/docs/devbox/quickstart/)
+> 以下 Windows 构建步骤由 AI 生成，未经测试。
 
-### 构建与运行
+- Windows 10 或更高版本，64 位 (x64)
+- [Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)，勾选「使用 C++ 的桌面开发」工作负载
+
+### 构建步骤
+
+#### macOS (Recommended)
 
 ```bash
-# 安装前端依赖
+# 1. 安装 Xcode Command Line Tools（提供编译器和系统头文件）
+xcode-select --install
+
+# 2. 安装 Devbox（项目依赖管理工具，自动安装 Node.js、Rust 等）
+curl -fsSL https://get.jetify.com/devbox | bash
+
+# 3. 克隆仓库
+git clone https://github.com/yuman07/WenjianSkill.git
+
+# 4. 进入项目目录
+cd WenjianSkill
+
+# 5. 安装前端依赖
 devbox run -- npm install
 
-# 开发模式（热重载）
+# 6. 开发模式（热重载）
 devbox run -- npm run tauri dev
 
-# 构建发布版本
-# macOS 生成 .dmg：
+# 7. 构建发布版本（生成 .dmg）
 devbox run -- npm run tauri build
-# Windows 生成便携式 .exe：
+```
+
+#### Windows
+
+> 以下 Windows 构建步骤由 AI 生成，未经测试。
+
+```powershell
+# 1. 安装 Microsoft Visual Studio C++ Build Tools（提供 MSVC 编译器和 Windows SDK）
+#    下载地址：https://visualstudio.microsoft.com/visual-cpp-build-tools/
+#    安装时勾选「使用 C++ 的桌面开发」工作负载
+
+# 2. 安装 Devbox（项目依赖管理工具，自动安装 Node.js、Rust 等）
+#    参考 https://www.jetify.com/docs/devbox/quickstart/ 安装
+
+# 3. 克隆仓库
+git clone https://github.com/yuman07/WenjianSkill.git
+
+# 4. 进入项目目录
+cd WenjianSkill
+
+# 5. 安装前端依赖
+devbox run -- npm install
+
+# 6. 开发模式（热重载）
+devbox run -- npm run tauri dev
+
+# 7. 构建发布版本（生成便携式 .exe）
 devbox run -- npm run tauri build -- --no-bundle
 ```
 
