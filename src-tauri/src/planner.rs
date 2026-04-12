@@ -124,8 +124,10 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
     // Recompute i's shop surplus EXCLUDING skill i, to get the true available.
     // (Naive "total_surplus - own_surplus" overcounts when intra-shop conversions
     // consume part of the individual surplus.)
+    // NOTE: must NOT skip on self_needed==0 — some realm/class combos (返虚, 合体百族
+    // etc.) have self_pages=0 at low levels but still need gold_pages.
     for i in 0..n {
-        if self_needed[i] == 0 { continue; }
+        if input.combat_skills[i].current_level >= input.combat_skills[i].target_level { continue; }
         let s = &input.combat_skills[i];
         let cost = total_cost_between(s.current_level, s.target_level, s.realm, s.skill_class);
         let si = s.shop.index();
