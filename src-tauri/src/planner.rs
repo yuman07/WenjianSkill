@@ -605,22 +605,15 @@ fn simulate_week(state: &mut SimState, input: &PlannerInput, week: u32) -> WeekP
 // Entry point
 // ============================================================
 
-pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
-    let min_weeks = match find_minimum_weeks(input) {
-        Some(w) => w,
-        None => {
-            return PlannerOutput {
-                feasible: false,
-                weeks: Vec::new(),
-                unreachable_reasons: generate_reasons(input),
-                final_levels: input.combat_skills.iter().map(|s| s.current_level).collect(),
-            };
-        }
-    };
-
-    let final_targets = find_bonus_levels(input, min_weeks);
-    let mut state = SimState::from_input(input, &final_targets);
+/// Run the weekly simulation with the given targets.
+/// Returns (week_plans, last_simulated_week, final_levels).
+fn simulate_plan(
+    input: &PlannerInput,
+    targets: &[SkillLevel],
+) -> (Vec<WeekPlan>, u32, Vec<SkillLevel>) {
+    let mut state = SimState::from_input(input, targets);
     let mut weeks = Vec::new();
+    let mut last_week = 0u32;
 
     // Week 0: conversions + upgrades with initial resources
     {
@@ -636,28 +629,60 @@ pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
         }
     }
 
-    for w in 1..=min_weeks {
-        if state.all_done() { break; }
+    let mut w = 1u32;
+    while !state.all_done() && w <= MAX_WEEKS * 2 {
         weeks.push(simulate_week(&mut state, input, w));
+        last_week = w;
+        w += 1;
     }
 
-    // The feasibility check uses aggregate conversion capacity (free_conv * weeks + stones)
-    // but the simulation enforces a per-week limit. When multiple conversion sources arrive
-    // in the same week, the per-week bottleneck may require extra weeks to schedule all
-    // conversions. Extend the simulation until all upgrades complete.
-    {
-        let mut w = min_weeks + 1;
-        while !state.all_done() && w <= min_weeks + MAX_WEEKS {
-            weeks.push(simulate_week(&mut state, input, w));
-            w += 1;
+    (weeks, last_week, state.levels.clone())
+}
+
+pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
+    let min_weeks = match find_minimum_weeks(input) {
+        Some(w) => w,
+        None => {
+            return PlannerOutput {
+                feasible: false,
+                weeks: Vec::new(),
+                unreachable_reasons: generate_reasons(input),
+                final_levels: input.combat_skills.iter().map(|s| s.current_level).collect(),
+            };
         }
+    };
+
+    let mut effective_weeks = min_weeks;
+    let mut final_targets = find_bonus_levels(input, effective_weeks);
+
+    // Iteratively re-optimize bonus levels when simulation extends past expected weeks.
+    // The feasibility check uses aggregate conversion capacity but the simulation enforces
+    // a per-week limit, so extra weeks may be needed. Those extra weeks provide additional
+    // income that may enable higher bonus levels — re-run Phase 2 to capture this.
+    for _ in 0..10 {
+        let (weeks, actual_weeks, final_levels) = simulate_plan(input, &final_targets);
+
+        if actual_weeks <= effective_weeks {
+            return PlannerOutput {
+                feasible: true, weeks, unreachable_reasons: Vec::new(), final_levels,
+            };
+        }
+
+        let new_targets = find_bonus_levels(input, actual_weeks);
+        if new_targets == final_targets {
+            return PlannerOutput {
+                feasible: true, weeks, unreachable_reasons: Vec::new(), final_levels,
+            };
+        }
+
+        effective_weeks = actual_weeks;
+        final_targets = new_targets;
     }
 
+    // Convergence cap reached — return the last simulation result
+    let (weeks, _, final_levels) = simulate_plan(input, &final_targets);
     PlannerOutput {
-        feasible: true,
-        weeks,
-        unreachable_reasons: Vec::new(),
-        final_levels: state.levels.clone(),
+        feasible: true, weeks, unreachable_reasons: Vec::new(), final_levels,
     }
 }
 
