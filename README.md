@@ -156,6 +156,10 @@ flowchart LR
     App <-.->|open URL| Shell["plugin-shell"]
 ```
 
+- **数据流**：用户在 6 个 SkillCard 中填写技能配置，App.tsx 组装 `PlannerInput` 通过 Tauri IPC 发送给 Rust 后端，`lib.rs` 调用 `planner.rs` 执行三阶段算法，返回 `PlannerOutput` 由 PlanOutput 组件渲染逐周方案
+- **三阶段管线**：Phase 1 二分搜索最少周数 → Phase 2 穷举搜索 bonus 等级 → Phase 3 逐周模拟生成操作步骤。若模拟实际周数超出预期，Phase 3 会回溯触发 Phase 2 重新优化，迭代直至收敛
+- **Tauri 插件**（虚线）：plugin-store 为 App 提供状态自动持久化；plugin-dialog + plugin-fs 为 PlanOutput 提供导出 TXT 的文件选择和写入能力；plugin-shell 用于打开外部链接
+
 ### 项目结构
 
 ```
