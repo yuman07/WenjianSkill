@@ -110,6 +110,31 @@
 - macOS 14.0 (Sonoma) 或更高版本，Apple Silicon (M 系列芯片)
 - Xcode Command Line Tools
 
+### 构建步骤
+
+```bash
+# 1. 安装 Xcode Command Line Tools（提供编译器和系统头文件）
+xcode-select --install
+
+# 2. 安装 Devbox（项目依赖管理工具，自动安装 Node.js、Rust 等）
+curl -fsSL https://get.jetify.com/devbox | bash
+
+# 3. 克隆仓库
+git clone https://github.com/yuman07/WenjianSkill.git
+
+# 4. 进入项目目录
+cd WenjianSkill
+
+# 5. 安装前端依赖
+devbox run -- npm install
+
+# 6. 开发模式（热重载）
+devbox run -- npm run tauri dev
+
+# 7. 构建发布版本（生成 .dmg）
+devbox run -- npm run tauri build
+```
+
 ### 项目结构
 
 ```
@@ -144,31 +169,6 @@
 2. `App.tsx` 组装 `PlannerInput`，通过 Tauri IPC 调用 Rust 后端 `generate_plan`
 3. `planner.rs` 执行三阶段算法（二分搜索最少周数 → 穷举 bonus 等级 → 逐周模拟）
 4. 返回 `PlannerOutput`，前端 `PlanOutput` 渲染逐周操作步骤
-
-### 构建步骤
-
-```bash
-# 1. 安装 Xcode Command Line Tools（提供编译器和系统头文件）
-xcode-select --install
-
-# 2. 安装 Devbox（项目依赖管理工具，自动安装 Node.js、Rust 等）
-curl -fsSL https://get.jetify.com/devbox | bash
-
-# 3. 克隆仓库
-git clone https://github.com/yuman07/WenjianSkill.git
-
-# 4. 进入项目目录
-cd WenjianSkill
-
-# 5. 安装前端依赖
-devbox run -- npm install
-
-# 6. 开发模式（热重载）
-devbox run -- npm run tauri dev
-
-# 7. 构建发布版本（生成 .dmg）
-devbox run -- npm run tauri build
-```
 
 ## License
 
