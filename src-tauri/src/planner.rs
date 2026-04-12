@@ -96,7 +96,9 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
             (deficit + PAGES_PER_UNIT - 1) / PAGES_PER_UNIT
         })
         .sum();
-    let conv_capacity = adv.free_conversions_per_week * weeks + adv.conversion_stones;
+    // weeks+1 because the simulation grants free_conv at week 0 (initial resources)
+    // plus at each of weeks 1..=W, totalling (W+1) batches of free conversions.
+    let conv_capacity = adv.free_conversions_per_week * (weeks + 1) + adv.conversion_stones;
     if total_conversions_needed > conv_capacity {
         return false;
     }
@@ -474,10 +476,19 @@ fn do_conversions_and_upgrades(
             if !any { break; }
         }
 
-        // Try one conversion for the skill closest to its next upgrade
+        // Try one conversion for the skill that most immediately benefits.
+        // Only consider skills whose NEXT level actually needs more self-pages than
+        // they currently have — skills blocked on gold/purple/blue (not self-pages)
+        // gain nothing from conversion and would waste the slot.
         if free_left == 0 && state.stones == 0 { break; }
         let mut candidates: Vec<usize> = (0..n)
-            .filter(|&i| state.levels[i] < state.targets[i] && state.self_remaining_need(i) > 0)
+            .filter(|&i| {
+                if state.levels[i] >= state.targets[i] { return false; }
+                let next = state.levels[i].next().unwrap();
+                let costs = upgrade_costs_for_category(cost_category(state.realms[i], state.skill_classes[i]));
+                let self_for_next = costs.get(next.index() - 1).map_or(0, |c| c.self_pages);
+                state.pages[i] < self_for_next
+            })
             .collect();
         // Prioritize by how few pages are still needed for the NEXT level-up
         // (smallest deficit = one conversion has maximum impact)
