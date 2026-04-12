@@ -105,21 +105,10 @@
 
 ### 前置要求
 
-#### macOS (Recommended)
-
 - macOS 14.0 (Sonoma) 或更高版本，Apple Silicon (M 系列芯片)
 - Xcode Command Line Tools
 
-#### Windows
-
-> 以下 Windows 构建步骤由 AI 生成，未经测试。
-
-- Windows 10 或更高版本，64 位 (x64)
-- [Microsoft Visual Studio C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)，勾选「使用 C++ 的桌面开发」工作负载
-
 ### 构建步骤
-
-#### macOS (Recommended)
 
 ```bash
 # 1. 安装 Xcode Command Line Tools（提供编译器和系统头文件）
@@ -142,34 +131,6 @@ devbox run -- npm run tauri dev
 
 # 7. 构建发布版本（生成 .dmg）
 devbox run -- npm run tauri build
-```
-
-#### Windows
-
-> 以下 Windows 构建步骤由 AI 生成，未经测试。
-
-```powershell
-# 1. 安装 Microsoft Visual Studio C++ Build Tools（提供 MSVC 编译器和 Windows SDK）
-#    下载地址：https://visualstudio.microsoft.com/visual-cpp-build-tools/
-#    安装时勾选「使用 C++ 的桌面开发」工作负载
-
-# 2. 安装 Devbox（项目依赖管理工具，自动安装 Node.js、Rust 等）
-#    参考 https://www.jetify.com/docs/devbox/quickstart/ 安装
-
-# 3. 克隆仓库
-git clone https://github.com/yuman07/WenjianSkill.git
-
-# 4. 进入项目目录
-cd WenjianSkill
-
-# 5. 安装前端依赖
-devbox run -- npm install
-
-# 6. 开发模式（热重载）
-devbox run -- npm run tauri dev
-
-# 7. 构建发布版本（生成便携式 .exe）
-devbox run -- npm run tauri build -- --no-bundle
 ```
 
 ## License
