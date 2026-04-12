@@ -145,7 +145,7 @@ export default function App() {
             {showInfo && (
               <div className="absolute right-0 top-8 w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  当前版本(v{__APP_VERSION__})已完美适配渡劫期前所有神通。渡劫期神通暂沿用大乘期神通升级消耗数据，可能存在偏差，待获取准确数据后更新
+                  当前版本(v{__APP_VERSION__})已完美适配渡劫期之前所有神通。渡劫期神通暂沿用大乘期神通升级消耗数据，可能存在偏差，待获取准确数据后更新
                 </p>
                 <hr className="my-3 border-gray-200" />
                 <p className="text-sm text-gray-500 text-right">千山暮雪-昆虫子</p>
