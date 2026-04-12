@@ -75,5 +75,34 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
-          generate_release_notes: true
+          body: |
+            ## 问剑长生 · 神通升级规划 v1.0.0
+
+            首个正式版本发布！
+
+            ### 功能
+
+            - **一键规划** — 输入 6 个战斗神通的当前状态和目标等级，自动计算最少周数达成所有目标
+            - **逐周操作指引** — 生成每周详细步骤：兑换书页、转换书页、升级神通
+            - **穷举最优解** — 达成目标后自动利用剩余资源穷举搜索最优额外提升方案
+            - **导出方案** — 支持导出规划方案为 TXT 文件
+            - **自动保存** — 所有设置自动持久化，重启应用后保留上次输入
+
+            ### 支持平台
+
+            | 平台 | 架构 | 最低版本 | 格式 |
+            |------|------|----------|------|
+            | macOS | Apple Silicon (ARM) | 14.0 Sonoma | `.dmg` |
+            | Windows | x64 | 10 | `.exe` (便携版) |
+
+            ### 技术栈
+
+            Tauri 2 + Rust + React 19 + TypeScript + Tailwind CSS
+
+            ### 安装说明
+
+            > 本应用未进行代码签名，首次运行时系统会弹出安全警告。
+
+            **macOS**: 打开 DMG → 拖入 Applications → 首次运行右键选择"打开"
+            **Windows**: 直接运行 EXE，如遇 SmartScreen 提示点击"仍要运行"
           files: artifacts/*
