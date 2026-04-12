@@ -581,6 +581,18 @@ pub fn run_planner(input: &PlannerInput) -> PlannerOutput {
         weeks.push(simulate_week(&mut state, input, w));
     }
 
+    // The feasibility check uses aggregate conversion capacity (free_conv * weeks + stones)
+    // but the simulation enforces a per-week limit. When multiple conversion sources arrive
+    // in the same week, the per-week bottleneck may require extra weeks to schedule all
+    // conversions. Extend the simulation until all upgrades complete.
+    {
+        let mut w = min_weeks + 1;
+        while !state.all_done() && w <= min_weeks + MAX_WEEKS {
+            weeks.push(simulate_week(&mut state, input, w));
+            w += 1;
+        }
+    }
+
     PlannerOutput {
         feasible: true,
         weeks,
