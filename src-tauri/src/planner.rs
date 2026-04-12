@@ -297,6 +297,26 @@ impl SimState {
         self.pages[i].saturating_sub(cost.self_pages)
     }
 
+    /// Fodder pool pages in `shop` that are safe to use as 仙品 without starving
+    /// same-shop 本体 conversions. `exclude`: the skill being upgraded (can't
+    /// donate to itself, so excluded from intra-shop surplus calculation).
+    fn fodder_available_as_other(&self, shop: Shop, exclude: usize, n: usize) -> u32 {
+        let si = shop.index();
+        let pool = self.fodder_pools[si];
+        // Total 本体 deficit for all skills in this shop
+        let deficit: u32 = (0..n)
+            .filter(|&j| self.shops[j] == shop && self.levels[j] < self.targets[j])
+            .map(|j| self.self_remaining_need(j))
+            .sum();
+        // Intra-shop skill surplus that can cover part of the deficit via conversion
+        let skill_surplus: u32 = (0..n)
+            .filter(|&j| j != exclude && self.shops[j] == shop)
+            .map(|j| self.donatable(j))
+            .sum();
+        let needed_from_pool = deficit.saturating_sub(skill_surplus);
+        pool.saturating_sub(needed_from_pool)
+    }
+
     /// Try upgrade skill i, consuming 仙品 from other skills' surplus
     fn try_upgrade(&mut self, i: usize, n: usize) -> Option<UpgradeAction> {
         if self.levels[i] >= self.targets[i] { return None; }
@@ -310,27 +330,32 @@ impl SimState {
         if self.pages[i] < cost.self_pages { return None; }
         if self.purple < cost.purple_pages || self.blue < cost.blue_pages { return None; }
 
-        // Check 仙品: other skills' surplus + fodder pools
+        // Check 仙品: other skills' surplus + fodder pools (only the portion safe
+        // to use without starving same-shop conversions)
         let total_donatable: u32 = (0..n).filter(|&j| j != i).map(|j| self.donatable(j)).sum();
-        let total_fodder: u32 = self.fodder_pools.iter().sum();
-        if total_donatable + total_fodder < cost.other_pages { return None; }
+        let mut fodder_avail = [0u32; 5];
+        for &shop in &Shop::ALL {
+            fodder_avail[shop.index()] = self.fodder_available_as_other(shop, i, n);
+        }
+        let total_fodder_available: u32 = fodder_avail.iter().sum();
+        if total_donatable + total_fodder_available < cost.other_pages { return None; }
 
         // Execute
         self.pages[i] -= cost.self_pages;
 
-        // Consume 仙品: fodder pools first (low rarity), then other skills' surplus
+        // Consume 仙品: fodder pools first (low rarity, only safe portion),
+        // then other skills' surplus
         let mut consumed: HashMap<String, u32> = HashMap::new();
         let mut remaining = cost.other_pages;
         let mut shop_order: Vec<Shop> = Shop::ALL.to_vec();
         shop_order.sort_by_key(|s| s.rarity());
 
-        // From fodder pools first
+        // From fodder pools (only the portion not reserved for same-shop conversions)
         for &shop in &shop_order {
             if remaining == 0 { break; }
-            let pool = &mut self.fodder_pools[shop.index()];
-            let take = (*pool).min(remaining);
+            let take = fodder_avail[shop.index()].min(remaining);
             if take > 0 {
-                *pool -= take;
+                self.fodder_pools[shop.index()] -= take;
                 consumed.insert(format!("pool_{}", shop.index()), take);
                 remaining -= take;
             }
