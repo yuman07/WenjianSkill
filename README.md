@@ -9,8 +9,8 @@
   <a href="https://github.com/yuman07/WenjianSkill/releases"><img src="https://img.shields.io/github/downloads/yuman07/WenjianSkill/total" alt="Downloads"></a>
   <a href="https://github.com/yuman07/WenjianSkill/stargazers"><img src="https://img.shields.io/github/stars/yuman07/WenjianSkill" alt="Stars"></a>
   <br>
-  <img src="https://img.shields.io/badge/macOS-14.0%2B-black?logo=apple" alt="macOS 14.0+">
-  <img src="https://img.shields.io/badge/Windows-10%2B-blue?logo=windows" alt="Windows 10+">
+  <img src="https://img.shields.io/badge/macOS-14.0%2B%20ARM-black?logo=apple" alt="macOS 14.0+ ARM">
+  <img src="https://img.shields.io/badge/Windows-10%2B%20x64-blue?logo=windows" alt="Windows 10+ x64">
   <img src="https://img.shields.io/badge/Rust-1.94%2B-orange?logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/TypeScript-6-blue?logo=typescript" alt="TypeScript">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/yuman07/WenjianSkill" alt="License"></a>
