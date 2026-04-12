@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - run: npm install
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --target aarch64-apple-darwin
+      - name: Rename artifact with version info
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          MIN_OS=$(python3 -c "import json; print(json.load(open('src-tauri/tauri.conf.json'))['bundle']['macOS']['minimumSystemVersion'])")
+          APP_NAME=$(python3 -c "import json; print(json.load(open('src-tauri/tauri.conf.json'))['productName'])")
+          DMG_FILE=$(ls src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg)
+          mv "$DMG_FILE" "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/${APP_NAME}_macOS${MIN_OS}_arm64_${VERSION}.dmg"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos-dmg
+          path: src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install
+      - name: Build portable exe
+        run: npx tauri build --no-bundle
+      - name: Rename artifact with version info
+        shell: python
+        run: |
+          import json, shutil
+          conf = json.load(open("src-tauri/tauri.conf.json"))
+          app_name = conf["productName"]
+          version = "${{ github.ref_name }}"[1:]
+          src = "src-tauri/target/release/wenjian-skill.exe"
+          dst = f"src-tauri/target/release/{app_name}_Win10_x64_{version}.exe"
+          shutil.move(src, dst)
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-exe
+          path: src-tauri/target/release/WenjianSkill_*.exe
+
+  release:
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: artifacts/*
