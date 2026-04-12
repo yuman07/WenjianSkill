@@ -1,6 +1,28 @@
-# 问剑长生 · 神通升级规划工具
+<p align="center"><img src="src-tauri/icons/128x128@2x.png" width="128" height="128"></p>
 
-> 手游《问剑长生》的神通升级规划桌面应用，帮助玩家计算最优的按周升级路径。
+<h1 align="center">问剑长生 · 神通升级规划</h1>
+
+<p align="center"><strong>手游《问剑长生》的神通升级规划桌面应用，帮助玩家计算最优的按周升级路径</strong></p>
+
+<p align="center">
+  <a href="https://github.com/yuman07/WenjianSkill/releases/latest"><img src="https://img.shields.io/github/v/release/yuman07/WenjianSkill" alt="Release"></a>
+  <a href="https://github.com/yuman07/WenjianSkill/releases"><img src="https://img.shields.io/github/downloads/yuman07/WenjianSkill/total" alt="Downloads"></a>
+  <a href="https://github.com/yuman07/WenjianSkill/stargazers"><img src="https://img.shields.io/github/stars/yuman07/WenjianSkill" alt="Stars"></a>
+  <br>
+  <img src="https://img.shields.io/badge/macOS-14.0%2B-black?logo=apple" alt="macOS 14.0+">
+  <img src="https://img.shields.io/badge/Windows-10%2B-blue?logo=windows" alt="Windows 10+">
+  <img src="https://img.shields.io/badge/Rust-1.94%2B-orange?logo=rust" alt="Rust">
+  <img src="https://img.shields.io/badge/TypeScript-6-blue?logo=typescript" alt="TypeScript">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/yuman07/WenjianSkill" alt="License"></a>
+</p>
+
+---
+
+## 这是什么？
+
+WenjianSkill 是手游《问剑长生》的**神通升级规划工具**。玩家输入 6 个战斗神通的当前状态和目标等级，应用会自动计算出达成目标所需的**最少周数**，并生成**逐周操作步骤**——兑换哪些书页、转换哪些书页、升级哪个神通，全部安排妥当。
+
+达成目标后，引擎还会自动利用剩余资源**穷举搜索**最优的额外提升方案，确保每一份资源都不浪费。
 
 ## 功能特性
 
@@ -10,97 +32,38 @@
 - **导出方案** — 支持导出规划方案为 TXT 文件，方便分享或离线查阅
 - **自动保存** — 所有设置自动持久化，重启应用后保留上次输入
 
-## 截图
-
-<table>
-  <tr>
-    <td><img src="Screenshots/a.png" alt="神通配置" /></td>
-    <td><img src="Screenshots/b.png" alt="材料设置" /></td>
-  </tr>
-  <tr>
-    <td><img src="Screenshots/c.png" alt="规划结果" /></td>
-    <td><img src="Screenshots/d.png" alt="逐周方案" /></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="Screenshots/a.png" width="49%" alt="神通配置">
+  <img src="Screenshots/b.png" width="49%" alt="材料设置">
+</p>
+<p align="center">
+  <img src="Screenshots/c.png" width="49%" alt="规划结果">
+  <img src="Screenshots/d.png" width="49%" alt="逐周方案">
+</p>
 
 ## 安装
 
 前往 [Releases](https://github.com/yuman07/WenjianSkill/releases/latest) 页面下载对应平台的安装包。
 
-> 本应用未进行代码签名，首次运行时操作系统会弹出安全警告，请按照下方说明操作。
+> **注意：** 本应用未进行代码签名，首次运行时操作系统会弹出安全警告，请按照下方说明操作。
 
-### macOS 14.0+ (Sonoma) Apple Silicon
+### macOS (14.0+, Apple Silicon)
 
 1. 下载 `WenjianSkill_macOS14_arm64_1.0.0.dmg`
 2. 打开 DMG 文件，将应用拖入「应用程序」文件夹
 3. 首次打开时，macOS Gatekeeper 会弹出"无法验证开发者"的提示。解决方法（任选其一）：
-   - 前往 **系统设置 → 隐私与安全性**，找到被拦截的应用，点击「仍要打开」
-   - 右键点击应用，选择「打开」，在弹出的对话框中再次点击「打开」
-   - 在终端中执行 `xattr -cr /Applications/WenjianSkill.app` 移除隔离属性后再打开
+   - **系统设置**：前往 **系统设置 → 隐私与安全性**，找到被拦截的应用，点击「仍要打开」
+   - **右键打开**：右键点击应用图标，选择「打开」，在弹出的对话框中再次点击「打开」
+   - **终端命令**：在终端中执行以下命令移除隔离属性，然后再打开应用：
+     ```bash
+     xattr -cr /Applications/WenjianSkill.app
+     ```
 
-### Windows 10+ x64
+### Windows (10+, x64)
 
 1. 下载 `WenjianSkill_Win10_x64_1.0.0.exe`
 2. 双击即可运行，无需安装（便携式应用，可放在任意目录）
 3. 首次运行时，Windows SmartScreen 会弹出「Windows 已保护你的电脑」的提示，点击「更多信息」→「仍要运行」即可
-
-## 算法说明
-
-### 资源模型
-
-每个神通升级需要消耗四种资源：
-
-| 资源 | 说明 |
-|------|------|
-| **本体书页** | 该神通自身的书页，通过对应商店兑换或同商店转换获得 |
-| **金色书页** | 来自其他神通的多余书页或狗粮池，跨商店通用 |
-| **紫色书页** | 全局通用资源，每周固定收入 |
-| **蓝色书页** | 全局通用资源，每周固定收入 |
-
-不同境界和职业的组合（如"合体·剑"、"大乘·百族"）对应不同的升级消耗表，最高可升级到天 3 或天 5。
-
-书页来源包括：神通自身的周期性收入、5 个商店（论剑/诸天/宗门/道蕴/百族）的狗粮池、以及每周转换次数（免费次数 + 转换石）。同商店内的书页可以互相转换为本体书页，每次转换固定 40 张。
-
-### 阶段一：二分搜索最少周数
-
-给定周数 W，可行性检查验证以下条件是否全部满足：
-
-1. **紫色 / 蓝色书页充足** — 初始存量 + W 周收入 ≥ 所有神通的总需求
-2. **各商店本体书页充足** — 每个商店内的技能书页 + 狗粮池 ≥ 该商店所有技能的本体需求
-3. **转换次数充足** — 本体书页不足的技能需要通过转换补足，总转换次数 ≤ 免费次数 × W + 转换石数量
-4. **金色书页充足** — 各商店的剩余书页（扣除本体需求后的盈余）≥ 所有技能的金色总需求；同时单独检查每个技能的金色可用量（排除自身书页不能给自己当金色的约束）
-
-以上检查均为 O(n) 复杂度。在 \[0, 500\] 的范围内进行二分搜索，即可在 O(n log 500) ≈ 9n 次检查内找到精确的最少周数。
-
-### 阶段二：穷举搜索 bonus 等级
-
-达成目标后通常还有剩余资源。引擎会尝试将每个神通尽可能再多升几级，取总等级提升最大的可行方案。
-
-搜索空间为每个神通从目标等级到该消耗分类最高等级的组合。对每种组合调用阶段一的可行性检查。搜索采用分支定界（branch-and-bound）剪枝：从高 bonus 向低 bonus 搜索以尽早找到好解，并用「当前累计 + 剩余上界 ≤ 已知最优」的条件跳过不可能更优的分支。
-
-### 阶段三：逐周模拟生成操作步骤
-
-确定最终目标等级后，模拟器按周推进，每周执行：
-
-1. **结算收入** — 各技能和狗粮池按各自周期发放书页，紫色/蓝色书页按周增加
-2. **交替执行转换与升级** — 循环进行直到无法继续：
-   - **升级优先级**：优先升级金色需求较少的技能（减少对共享资源的竞争），同等条件下优先升级离目标更近的技能（尽早释放书页盈余）
-   - **转换来源优先级**：同商店狗粮池优先于其他技能的盈余
-   - **转换槽位优先级**：每周前 3 次免费转换 → 转换石 → 剩余免费转换次数
-   - **金色消耗优先级**：珍贵度低的资源优先消耗（论剑 > 诸天 = 宗门 > 道蕴 > 百族）
-
-阶段一的可行性检查使用聚合转换容量，而模拟器执行每周转换上限。当每周瓶颈导致模拟超出预期周数时，额外的周数带来了额外收入，引擎会用实际周数重新运行阶段二的 bonus 搜索，以利用这些额外资源进一步提升等级。此迭代过程重复进行直到 bonus 等级不再提升（通常 1-2 轮即收敛）。
-
-模拟器同时记录每步操作（兑换了哪些书页、转换了哪些、升了哪些级），最终输出为逐周操作计划。
-
-## 技术栈
-
-| 层级 | 技术 |
-|------|------|
-| 桌面框架 | Tauri 2 (macOS / Windows) |
-| 前端 | React 19 + TypeScript + Tailwind CSS 4 |
-| 后端算法 | Rust |
-| 构建工具 | Vite |
 
 ## 开发
 
@@ -110,16 +73,16 @@
 
 ### 前置要求
 
-- macOS 14.0 (Sonoma) 或更高版本，Apple Silicon (M 系列芯片)
-- Xcode Command Line Tools
+- macOS 15.6 (Sequoia) 或更高版本，Apple Silicon (M 系列芯片)
+- Xcode Command Line Tools 26 或更高版本
 
 ### 构建步骤
 
 ```bash
-# 1. 安装 Xcode Command Line Tools（提供编译器和系统头文件）
+# 1. 安装 Xcode Command Line Tools（提供编译器和系统链接器）
 xcode-select --install
 
-# 2. 安装 Devbox（项目依赖管理工具，自动安装 Node.js、Rust 等）
+# 2. 安装 Devbox（项目依赖管理工具，自动安装 Node.js 24、Rust 等）
 curl -fsSL https://get.jetify.com/devbox | bash
 
 # 3. 克隆仓库
@@ -131,11 +94,61 @@ cd WenjianSkill
 # 5. 安装前端依赖
 devbox run -- npm install
 
-# 6. 开发模式（热重载）
+# 6. 开发模式（热重载，前端自动刷新）
 devbox run -- npm run tauri dev
 
-# 7. 构建发布版本（生成 .dmg）
+# 7. 构建发布版本（生成 .dmg 安装包）
 devbox run -- npm run tauri build
+```
+
+## 技术概览
+
+WenjianSkill 采用 Tauri 2 架构，前端使用 React 渲染 UI，后端使用 Rust 执行核心规划算法。前后端通过 Tauri IPC 通信：用户在 React 界面填写技能配置和材料预算后，`App.tsx` 组装 `PlannerInput` 并调用 Rust 端的 `generate_plan` 命令，Rust 引擎执行三阶段优化算法后返回 `PlannerOutput`，前端渲染逐周操作方案。
+
+用户状态通过 Tauri plugin-store 自动持久化到本地，规划方案可通过 plugin-dialog + plugin-fs 导出为格式化 TXT 文件。
+
+### 核心算法
+
+引擎采用**三阶段优化**策略：
+
+**阶段一：二分搜索最少周数。** 给定周数 W，O(n) 可行性检查验证四个约束——紫色/蓝色书页充足、各商店本体书页充足、转换次数充足、金色书页充足（含单技能约束）。在 \[0, 500\] 范围二分搜索，O(n log 500) ≈ 9n 次检查找到精确最少周数。
+
+**阶段二：穷举搜索 bonus 等级。** 达成目标后通常有剩余资源。引擎穷举每个技能从目标到最高等级的组合，对每种组合调用阶段一可行性检查，取总等级提升最大的方案。采用分支定界剪枝：从高 bonus 向低 bonus 搜索以尽早找到好解，用「当前累计 + 剩余上界 ≤ 已知最优」跳过劣解分支。
+
+**阶段三：逐周模拟。** 确定最终目标后按周推进——结算收入、交替执行转换与升级。转换和升级使用多维度优先级策略（金色需求少的优先升级、同商店狗粮优先转换、珍贵度低的资源优先消耗为金色等）。若模拟超出预期周数，引擎用实际周数重新运行阶段二，迭代直至 bonus 等级收敛。
+
+### 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| 桌面框架 | Tauri 2 (macOS / Windows) |
+| 前端 | React 19 + TypeScript 6 + Tailwind CSS 4 |
+| 前端构建 | Vite 8 |
+| 后端算法 | Rust (Edition 2024) |
+| 开发环境 | Devbox (Node.js 24, Rust 1.94+) |
+
+### 架构
+
+```
+┌─────────────────────────────────────────────────┐
+│                    Tauri Shell                   │
+│                                                  │
+│  ┌──────────────────┐    ┌───────────────────┐  │
+│  │     Frontend      │    │      Backend      │  │
+│  │  React + Vite     │◄──►│      Rust         │  │
+│  │                   │IPC │                   │  │
+│  │  App.tsx          │    │  lib.rs           │  │
+│  │  ├─ SkillCard ×6  │    │  ├─ models.rs     │  │
+│  │  ├─ PlanOutput    │    │  └─ planner.rs    │  │
+│  │  └─ persistence   │    │     ├─ Phase 1    │  │
+│  │                   │    │     ├─ Phase 2    │  │
+│  │  Tailwind CSS     │    │     └─ Phase 3    │  │
+│  └──────────────────┘    └───────────────────┘  │
+│                                                  │
+│  ┌──────────────────────────────────────────┐   │
+│  │  Tauri Plugins: dialog, fs, store, shell │   │
+│  └──────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────┘
 ```
 
 ### 项目结构
@@ -160,18 +173,11 @@ devbox run -- npm run tauri build
 │   │   ├── models.rs           #   数据模型：枚举、消耗表、输入输出结构体
 │   │   └── planner.rs          #   核心算法：二分搜索 + 穷举 bonus + 逐周模拟
 │   ├── tauri.conf.json         #   Tauri 配置：窗口尺寸、打包、最低系统版本
-│   └── Cargo.toml              #   Rust 依赖
+│   └── Cargo.toml              #   Rust 依赖与发布优化配置
 ├── devbox.json                 # 开发环境依赖（Node.js、Rust）
 ├── package.json                # 前端依赖
 └── vite.config.ts              # Vite 构建配置
 ```
-
-### 数据流
-
-1. 用户在 `SkillCard` 中填写 6 个技能的配置和材料预算
-2. `App.tsx` 组装 `PlannerInput`，通过 Tauri IPC 调用 Rust 后端 `generate_plan`
-3. `planner.rs` 执行三阶段算法（二分搜索最少周数 → 穷举 bonus 等级 → 逐周模拟，迭代优化直至收敛）
-4. 返回 `PlannerOutput`，前端 `PlanOutput` 渲染逐周操作步骤
 
 ## License
 
