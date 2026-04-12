@@ -130,27 +130,30 @@ WenjianSkill 采用 Tauri 2 架构，前端使用 React 渲染 UI，后端使用
 ### 架构
 
 ```mermaid
-graph TB
-    subgraph Tauri["Tauri Shell"]
-        direction LR
-        subgraph Frontend["Frontend · React + Vite"]
-            App["App.tsx"]
-            SkillCard["SkillCard x6"]
-            PlanOutput["PlanOutput"]
-            Persistence["persistence"]
-            Tailwind["Tailwind CSS"]
-        end
-        subgraph Backend["Backend · Rust"]
-            Lib["lib.rs"]
-            Models["models.rs"]
-            Planner["planner.rs"]
-            P1["Phase 1 · Binary Search"]
-            P2["Phase 2 · Exhaustive Bonus"]
-            P3["Phase 3 · Weekly Simulation"]
-        end
-        Frontend <-->|IPC| Backend
-        Plugins["Tauri Plugins: dialog · fs · store · shell"]
+flowchart LR
+    subgraph Frontend["Frontend · React + TypeScript + Tailwind CSS"]
+        direction TB
+        SC["SkillCard x6"] -->|user input| App["App.tsx"]
+        App -->|PlannerOutput| PO["PlanOutput"]
     end
+
+    App -->|"PlannerInput (IPC)"| Lib
+    Lib -->|"PlannerOutput (IPC)"| App
+
+    subgraph Backend["Backend · Rust"]
+        direction TB
+        Lib["lib.rs<br/>generate_plan()"] --> Algo
+        Models["models.rs<br/>types & cost tables"] -.-> Algo
+        subgraph Algo["planner.rs"]
+            direction LR
+            P1["Phase 1<br/>Binary Search"] --> P2["Phase 2<br/>Exhaustive Bonus"] --> P3["Phase 3<br/>Simulation"]
+            P3 -.->|re-optimize| P2
+        end
+    end
+
+    App <-.->|auto-save| Store["plugin-store"]
+    PO <-.->|export TXT| DFS["plugin-dialog + plugin-fs"]
+    App <-.->|open URL| Shell["plugin-shell"]
 ```
 
 ### 项目结构
