@@ -61,9 +61,9 @@ function formatWeek(week: WeekPlan, skills: CombatSkillInput[]): string {
       const u = week.upgrades[ui];
       lines.push(`     - ${n(skills, u.skillIndex)}: ${u.fromLevel} → ${u.toLevel}`);
       const costs: string[] = [`本体 ${u.selfPagesUsed}张`];
-      const donorList = formatDonors(u.otherPagesConsumed, skills);
+      const donorList = formatDonors(u.goldPagesConsumed, skills);
       if (donorList.length > 0) {
-        costs.push(`仙品: ${donorList.join("、")}`);
+        costs.push(`金色: ${donorList.join("、")}`);
       }
       if (u.purplePagesUsed > 0) costs.push(`紫色 ${u.purplePagesUsed}`);
       if (u.bluePagesUsed > 0) costs.push(`蓝色 ${u.bluePagesUsed}`);

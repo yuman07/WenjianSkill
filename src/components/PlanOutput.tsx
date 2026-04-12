@@ -92,7 +92,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                     : "操作"}：升级神通
                 </div>
                 {week.upgrades.map((u, i) => {
-                  const donorList = formatDonors(u.otherPagesConsumed, skills);
+                  const donorList = formatDonors(u.goldPagesConsumed, skills);
                   const isLast = i === week.upgrades.length - 1;
                   const nextSkillDiff = !isLast && week.upgrades[i + 1].skillIndex !== u.skillIndex;
                   return (
@@ -104,7 +104,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                       </div>
                       <div className="text-xs text-gray-400 mt-0.5 leading-relaxed">
                         消耗：本体 {u.selfPagesUsed} 张
-                        {donorList.length > 0 && <>，仙品：{donorList.join("、")}</>}
+                        {donorList.length > 0 && <>，金色：{donorList.join("、")}</>}
                         {u.purplePagesUsed > 0 && <>，紫色 {u.purplePagesUsed}</>}
                         {u.bluePagesUsed > 0 && <>，蓝色 {u.bluePagesUsed}</>}
                       </div>

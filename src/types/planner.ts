@@ -97,7 +97,7 @@ export interface UpgradeAction {
   fromLevel: SkillLevel;
   toLevel: SkillLevel;
   selfPagesUsed: number;
-  otherPagesConsumed: Record<string, number>; // skill index → pages taken
+  goldPagesConsumed: Record<string, number>; // skill index → pages taken
   purplePagesUsed: number;
   bluePagesUsed: number;
 }

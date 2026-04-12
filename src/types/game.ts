@@ -68,7 +68,7 @@ export const SKILL_LEVELS: SkillLevel[] = [
 /** 升级消耗：从前一等级升到该等级所需的材料 */
 export interface UpgradeCost {
   selfPages: number;   // 本体书页
-  otherPages: number;  // 仙品书页（任意其他神通的本体书页）
+  goldPages: number;  // 金色书页（任意其他神通的本体书页）
   purplePages: number; // 紫色书页
   bluePages: number;   // 蓝色书页
 }
@@ -102,17 +102,17 @@ export function getCostCategory(realm: Realm, cls: SkillClass): CostCategory {
  * 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
  */
 const COSTS_RENJIE_TRIPLE: UpgradeCost[] = [
-  { selfPages: 40,  otherPages: 0,   purplePages: 0,   bluePages: 0 },
-  { selfPages: 40,  otherPages: 0,   purplePages: 30,  bluePages: 100 },
-  { selfPages: 40,  otherPages: 0,   purplePages: 60,  bluePages: 150 },
-  { selfPages: 40,  otherPages: 40,  purplePages: 60,  bluePages: 150 },
-  { selfPages: 40,  otherPages: 40,  purplePages: 90,  bluePages: 220 },
-  { selfPages: 40,  otherPages: 40,  purplePages: 90,  bluePages: 220 },
-  { selfPages: 40,  otherPages: 40,  purplePages: 90,  bluePages: 220 },
-  { selfPages: 80,  otherPages: 80,  purplePages: 200, bluePages: 500 },
-  { selfPages: 80,  otherPages: 80,  purplePages: 200, bluePages: 500 },
-  { selfPages: 120, otherPages: 120, purplePages: 300, bluePages: 750 },
-  { selfPages: 120, otherPages: 120, purplePages: 300, bluePages: 750 },
+  { selfPages: 40,  goldPages: 0,   purplePages: 0,   bluePages: 0 },
+  { selfPages: 40,  goldPages: 0,   purplePages: 30,  bluePages: 100 },
+  { selfPages: 40,  goldPages: 0,   purplePages: 60,  bluePages: 150 },
+  { selfPages: 40,  goldPages: 40,  purplePages: 60,  bluePages: 150 },
+  { selfPages: 40,  goldPages: 40,  purplePages: 90,  bluePages: 220 },
+  { selfPages: 40,  goldPages: 40,  purplePages: 90,  bluePages: 220 },
+  { selfPages: 40,  goldPages: 40,  purplePages: 90,  bluePages: 220 },
+  { selfPages: 80,  goldPages: 80,  purplePages: 200, bluePages: 500 },
+  { selfPages: 80,  goldPages: 80,  purplePages: 200, bluePages: 500 },
+  { selfPages: 120, goldPages: 120, purplePages: 300, bluePages: 750 },
+  { selfPages: 120, goldPages: 120, purplePages: 300, bluePages: 750 },
 ];
 
 /**
@@ -120,17 +120,17 @@ const COSTS_RENJIE_TRIPLE: UpgradeCost[] = [
  * 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
  */
 const COSTS_FANXU_TRIPLE: UpgradeCost[] = [
-  { selfPages: 0,   otherPages: 80,  purplePages: 100,  bluePages: 200 },
-  { selfPages: 0,   otherPages: 80,  purplePages: 100,  bluePages: 200 },
-  { selfPages: 40,  otherPages: 80,  purplePages: 150,  bluePages: 350 },
-  { selfPages: 80,  otherPages: 80,  purplePages: 200,  bluePages: 500 },
-  { selfPages: 80,  otherPages: 120, purplePages: 250,  bluePages: 650 },
-  { selfPages: 80,  otherPages: 160, purplePages: 350,  bluePages: 900 },
-  { selfPages: 120, otherPages: 200, purplePages: 500,  bluePages: 1200 },
-  { selfPages: 160, otherPages: 240, purplePages: 600,  bluePages: 1500 },
-  { selfPages: 200, otherPages: 320, purplePages: 700,  bluePages: 1800 },
-  { selfPages: 240, otherPages: 400, purplePages: 800,  bluePages: 2100 },
-  { selfPages: 280, otherPages: 480, purplePages: 1000, bluePages: 2400 },
+  { selfPages: 0,   goldPages: 80,  purplePages: 100,  bluePages: 200 },
+  { selfPages: 0,   goldPages: 80,  purplePages: 100,  bluePages: 200 },
+  { selfPages: 40,  goldPages: 80,  purplePages: 150,  bluePages: 350 },
+  { selfPages: 80,  goldPages: 80,  purplePages: 200,  bluePages: 500 },
+  { selfPages: 80,  goldPages: 120, purplePages: 250,  bluePages: 650 },
+  { selfPages: 80,  goldPages: 160, purplePages: 350,  bluePages: 900 },
+  { selfPages: 120, goldPages: 200, purplePages: 500,  bluePages: 1200 },
+  { selfPages: 160, goldPages: 240, purplePages: 600,  bluePages: 1500 },
+  { selfPages: 200, goldPages: 320, purplePages: 700,  bluePages: 1800 },
+  { selfPages: 240, goldPages: 400, purplePages: 800,  bluePages: 2100 },
+  { selfPages: 280, goldPages: 480, purplePages: 1000, bluePages: 2400 },
 ];
 
 /**
@@ -138,17 +138,17 @@ const COSTS_FANXU_TRIPLE: UpgradeCost[] = [
  * 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
  */
 const COSTS_FANXU_BAIZU: UpgradeCost[] = [
-  { selfPages: 0,   otherPages: 120, purplePages: 100,  bluePages: 300 },
-  { selfPages: 0,   otherPages: 120, purplePages: 150,  bluePages: 350 },
-  { selfPages: 40,  otherPages: 160, purplePages: 250,  bluePages: 600 },
-  { selfPages: 80,  otherPages: 160, purplePages: 300,  bluePages: 800 },
-  { selfPages: 80,  otherPages: 240, purplePages: 450,  bluePages: 1100 },
-  { selfPages: 80,  otherPages: 320, purplePages: 500,  bluePages: 1300 },
-  { selfPages: 120, otherPages: 400, purplePages: 600,  bluePages: 1600 },
-  { selfPages: 160, otherPages: 480, purplePages: 750,  bluePages: 1900 },
-  { selfPages: 200, otherPages: 560, purplePages: 900,  bluePages: 2200 },
-  { selfPages: 240, otherPages: 640, purplePages: 1000, bluePages: 2500 },
-  { selfPages: 280, otherPages: 720, purplePages: 1200, bluePages: 2800 },
+  { selfPages: 0,   goldPages: 120, purplePages: 100,  bluePages: 300 },
+  { selfPages: 0,   goldPages: 120, purplePages: 150,  bluePages: 350 },
+  { selfPages: 40,  goldPages: 160, purplePages: 250,  bluePages: 600 },
+  { selfPages: 80,  goldPages: 160, purplePages: 300,  bluePages: 800 },
+  { selfPages: 80,  goldPages: 240, purplePages: 450,  bluePages: 1100 },
+  { selfPages: 80,  goldPages: 320, purplePages: 500,  bluePages: 1300 },
+  { selfPages: 120, goldPages: 400, purplePages: 600,  bluePages: 1600 },
+  { selfPages: 160, goldPages: 480, purplePages: 750,  bluePages: 1900 },
+  { selfPages: 200, goldPages: 560, purplePages: 900,  bluePages: 2200 },
+  { selfPages: 240, goldPages: 640, purplePages: 1000, bluePages: 2500 },
+  { selfPages: 280, goldPages: 720, purplePages: 1200, bluePages: 2800 },
 ];
 
 /**
@@ -156,19 +156,19 @@ const COSTS_FANXU_BAIZU: UpgradeCost[] = [
  * 索引 0 = 1星→2星, ..., 索引 12 = 天4→天5
  */
 const COSTS_HETI_TRIPLE: UpgradeCost[] = [
-  { selfPages: 40,  otherPages: 120, purplePages: 100,  bluePages: 200 },
-  { selfPages: 40,  otherPages: 120, purplePages: 100,  bluePages: 200 },
-  { selfPages: 40,  otherPages: 120, purplePages: 150,  bluePages: 350 },
-  { selfPages: 80,  otherPages: 120, purplePages: 200,  bluePages: 500 },
-  { selfPages: 80,  otherPages: 160, purplePages: 250,  bluePages: 650 },
-  { selfPages: 120, otherPages: 200, purplePages: 350,  bluePages: 900 },
-  { selfPages: 120, otherPages: 240, purplePages: 500,  bluePages: 1200 },
-  { selfPages: 160, otherPages: 280, purplePages: 600,  bluePages: 1500 },
-  { selfPages: 200, otherPages: 360, purplePages: 700,  bluePages: 1800 },
-  { selfPages: 240, otherPages: 440, purplePages: 800,  bluePages: 2100 },
-  { selfPages: 280, otherPages: 520, purplePages: 1000, bluePages: 2400 },
-  { selfPages: 320, otherPages: 600, purplePages: 1000, bluePages: 2400 },
-  { selfPages: 360, otherPages: 680, purplePages: 1000, bluePages: 2400 },
+  { selfPages: 40,  goldPages: 120, purplePages: 100,  bluePages: 200 },
+  { selfPages: 40,  goldPages: 120, purplePages: 100,  bluePages: 200 },
+  { selfPages: 40,  goldPages: 120, purplePages: 150,  bluePages: 350 },
+  { selfPages: 80,  goldPages: 120, purplePages: 200,  bluePages: 500 },
+  { selfPages: 80,  goldPages: 160, purplePages: 250,  bluePages: 650 },
+  { selfPages: 120, goldPages: 200, purplePages: 350,  bluePages: 900 },
+  { selfPages: 120, goldPages: 240, purplePages: 500,  bluePages: 1200 },
+  { selfPages: 160, goldPages: 280, purplePages: 600,  bluePages: 1500 },
+  { selfPages: 200, goldPages: 360, purplePages: 700,  bluePages: 1800 },
+  { selfPages: 240, goldPages: 440, purplePages: 800,  bluePages: 2100 },
+  { selfPages: 280, goldPages: 520, purplePages: 1000, bluePages: 2400 },
+  { selfPages: 320, goldPages: 600, purplePages: 1000, bluePages: 2400 },
+  { selfPages: 360, goldPages: 680, purplePages: 1000, bluePages: 2400 },
 ];
 
 /**
@@ -176,17 +176,17 @@ const COSTS_HETI_TRIPLE: UpgradeCost[] = [
  * 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
  */
 const COSTS_HETI_BAIZU: UpgradeCost[] = [
-  { selfPages: 0,   otherPages: 160, purplePages: 100,  bluePages: 300 },
-  { selfPages: 0,   otherPages: 160, purplePages: 150,  bluePages: 350 },
-  { selfPages: 40,  otherPages: 200, purplePages: 250,  bluePages: 600 },
-  { selfPages: 80,  otherPages: 200, purplePages: 300,  bluePages: 800 },
-  { selfPages: 80,  otherPages: 280, purplePages: 450,  bluePages: 1100 },
-  { selfPages: 80,  otherPages: 360, purplePages: 500,  bluePages: 1300 },
-  { selfPages: 120, otherPages: 440, purplePages: 600,  bluePages: 1600 },
-  { selfPages: 160, otherPages: 520, purplePages: 750,  bluePages: 1900 },
-  { selfPages: 200, otherPages: 600, purplePages: 900,  bluePages: 2200 },
-  { selfPages: 240, otherPages: 680, purplePages: 1000, bluePages: 2500 },
-  { selfPages: 280, otherPages: 760, purplePages: 1200, bluePages: 2800 },
+  { selfPages: 0,   goldPages: 160, purplePages: 100,  bluePages: 300 },
+  { selfPages: 0,   goldPages: 160, purplePages: 150,  bluePages: 350 },
+  { selfPages: 40,  goldPages: 200, purplePages: 250,  bluePages: 600 },
+  { selfPages: 80,  goldPages: 200, purplePages: 300,  bluePages: 800 },
+  { selfPages: 80,  goldPages: 280, purplePages: 450,  bluePages: 1100 },
+  { selfPages: 80,  goldPages: 360, purplePages: 500,  bluePages: 1300 },
+  { selfPages: 120, goldPages: 440, purplePages: 600,  bluePages: 1600 },
+  { selfPages: 160, goldPages: 520, purplePages: 750,  bluePages: 1900 },
+  { selfPages: 200, goldPages: 600, purplePages: 900,  bluePages: 2200 },
+  { selfPages: 240, goldPages: 680, purplePages: 1000, bluePages: 2500 },
+  { selfPages: 280, goldPages: 760, purplePages: 1200, bluePages: 2800 },
 ];
 
 /**
@@ -194,19 +194,19 @@ const COSTS_HETI_BAIZU: UpgradeCost[] = [
  * 1星→天3 同合体百族，新增天3→天4、天4→天5
  */
 const COSTS_DACHENG_BAIZU: UpgradeCost[] = [
-  { selfPages: 0,   otherPages: 160, purplePages: 100,  bluePages: 300 },
-  { selfPages: 0,   otherPages: 160, purplePages: 150,  bluePages: 350 },
-  { selfPages: 40,  otherPages: 200, purplePages: 250,  bluePages: 600 },
-  { selfPages: 80,  otherPages: 200, purplePages: 300,  bluePages: 800 },
-  { selfPages: 80,  otherPages: 280, purplePages: 450,  bluePages: 1100 },
-  { selfPages: 80,  otherPages: 360, purplePages: 500,  bluePages: 1300 },
-  { selfPages: 120, otherPages: 440, purplePages: 600,  bluePages: 1600 },
-  { selfPages: 160, otherPages: 520, purplePages: 750,  bluePages: 1900 },
-  { selfPages: 200, otherPages: 600, purplePages: 900,  bluePages: 2200 },
-  { selfPages: 240, otherPages: 680, purplePages: 1000, bluePages: 2500 },
-  { selfPages: 280, otherPages: 760, purplePages: 1200, bluePages: 2800 },
-  { selfPages: 320, otherPages: 840, purplePages: 1400, bluePages: 3100 },
-  { selfPages: 360, otherPages: 920, purplePages: 1600, bluePages: 3400 },
+  { selfPages: 0,   goldPages: 160, purplePages: 100,  bluePages: 300 },
+  { selfPages: 0,   goldPages: 160, purplePages: 150,  bluePages: 350 },
+  { selfPages: 40,  goldPages: 200, purplePages: 250,  bluePages: 600 },
+  { selfPages: 80,  goldPages: 200, purplePages: 300,  bluePages: 800 },
+  { selfPages: 80,  goldPages: 280, purplePages: 450,  bluePages: 1100 },
+  { selfPages: 80,  goldPages: 360, purplePages: 500,  bluePages: 1300 },
+  { selfPages: 120, goldPages: 440, purplePages: 600,  bluePages: 1600 },
+  { selfPages: 160, goldPages: 520, purplePages: 750,  bluePages: 1900 },
+  { selfPages: 200, goldPages: 600, purplePages: 900,  bluePages: 2200 },
+  { selfPages: 240, goldPages: 680, purplePages: 1000, bluePages: 2500 },
+  { selfPages: 280, goldPages: 760, purplePages: 1200, bluePages: 2800 },
+  { selfPages: 320, goldPages: 840, purplePages: 1400, bluePages: 3100 },
+  { selfPages: 360, goldPages: 920, purplePages: 1600, bluePages: 3400 },
 ];
 
 /** 根据分类获取消耗表 */
@@ -243,14 +243,14 @@ export function totalCostBetween(from: SkillLevel, to: SkillLevel, realm: Realm,
   const costs = getUpgradeCosts(getCostCategory(realm, cls));
   const fromIdx = SKILL_LEVELS.indexOf(from);
   const toIdx = SKILL_LEVELS.indexOf(to);
-  const result: UpgradeCost = { selfPages: 0, otherPages: 0, purplePages: 0, bluePages: 0 };
+  const result: UpgradeCost = { selfPages: 0, goldPages: 0, purplePages: 0, bluePages: 0 };
   // costs[0] = 1星→2星 corresponds to fromIdx=0(1星) → toIdx=1(2星), i.e. SKILL_LEVELS index 1
   // So cost table index = SKILL_LEVELS index - 1
   for (let i = fromIdx + 1; i <= toIdx; i++) {
     const costIdx = i - 1; // cost table index: 0 = 1星→2星
     if (costIdx < 0 || costIdx >= costs.length) break;
     result.selfPages += costs[costIdx].selfPages;
-    result.otherPages += costs[costIdx].otherPages;
+    result.goldPages += costs[costIdx].goldPages;
     result.purplePages += costs[costIdx].purplePages;
     result.bluePages += costs[costIdx].bluePages;
   }

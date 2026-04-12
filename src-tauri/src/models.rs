@@ -170,7 +170,7 @@ impl SkillLevel {
 #[derive(Debug, Clone, Copy)]
 pub struct UpgradeCost {
     pub self_pages: u32,
-    pub other_pages: u32,
+    pub gold_pages: u32,
     pub purple_pages: u32,
     pub blue_pages: u32,
 }
@@ -178,96 +178,96 @@ pub struct UpgradeCost {
 /// Table 1: 人界 三系 (人界一/人界二 + 剑/火/雷, max 天3 = 11 levels)
 /// 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
 pub const COSTS_RENJIE_TRIPLE: [UpgradeCost; 11] = [
-    UpgradeCost { self_pages: 40,  other_pages: 0,   purple_pages: 0,   blue_pages: 0 },
-    UpgradeCost { self_pages: 40,  other_pages: 0,   purple_pages: 30,  blue_pages: 100 },
-    UpgradeCost { self_pages: 40,  other_pages: 0,   purple_pages: 60,  blue_pages: 150 },
-    UpgradeCost { self_pages: 40,  other_pages: 40,  purple_pages: 60,  blue_pages: 150 },
-    UpgradeCost { self_pages: 40,  other_pages: 40,  purple_pages: 90,  blue_pages: 220 },
-    UpgradeCost { self_pages: 40,  other_pages: 40,  purple_pages: 90,  blue_pages: 220 },
-    UpgradeCost { self_pages: 40,  other_pages: 40,  purple_pages: 90,  blue_pages: 220 },
-    UpgradeCost { self_pages: 80,  other_pages: 80,  purple_pages: 200, blue_pages: 500 },
-    UpgradeCost { self_pages: 80,  other_pages: 80,  purple_pages: 200, blue_pages: 500 },
-    UpgradeCost { self_pages: 120, other_pages: 120, purple_pages: 300, blue_pages: 750 },
-    UpgradeCost { self_pages: 120, other_pages: 120, purple_pages: 300, blue_pages: 750 },
+    UpgradeCost { self_pages: 40,  gold_pages: 0,   purple_pages: 0,   blue_pages: 0 },
+    UpgradeCost { self_pages: 40,  gold_pages: 0,   purple_pages: 30,  blue_pages: 100 },
+    UpgradeCost { self_pages: 40,  gold_pages: 0,   purple_pages: 60,  blue_pages: 150 },
+    UpgradeCost { self_pages: 40,  gold_pages: 40,  purple_pages: 60,  blue_pages: 150 },
+    UpgradeCost { self_pages: 40,  gold_pages: 40,  purple_pages: 90,  blue_pages: 220 },
+    UpgradeCost { self_pages: 40,  gold_pages: 40,  purple_pages: 90,  blue_pages: 220 },
+    UpgradeCost { self_pages: 40,  gold_pages: 40,  purple_pages: 90,  blue_pages: 220 },
+    UpgradeCost { self_pages: 80,  gold_pages: 80,  purple_pages: 200, blue_pages: 500 },
+    UpgradeCost { self_pages: 80,  gold_pages: 80,  purple_pages: 200, blue_pages: 500 },
+    UpgradeCost { self_pages: 120, gold_pages: 120, purple_pages: 300, blue_pages: 750 },
+    UpgradeCost { self_pages: 120, gold_pages: 120, purple_pages: 300, blue_pages: 750 },
 ];
 
 /// Table 2: 返虚 三系 (返虚 + 剑/火/雷, max 天3 = 11 levels)
 pub const COSTS_FANXU_TRIPLE: [UpgradeCost; 11] = [
-    UpgradeCost { self_pages: 0,   other_pages: 80,  purple_pages: 100,  blue_pages: 200 },
-    UpgradeCost { self_pages: 0,   other_pages: 80,  purple_pages: 100,  blue_pages: 200 },
-    UpgradeCost { self_pages: 40,  other_pages: 80,  purple_pages: 150,  blue_pages: 350 },
-    UpgradeCost { self_pages: 80,  other_pages: 80,  purple_pages: 200,  blue_pages: 500 },
-    UpgradeCost { self_pages: 80,  other_pages: 120, purple_pages: 250,  blue_pages: 650 },
-    UpgradeCost { self_pages: 80,  other_pages: 160, purple_pages: 350,  blue_pages: 900 },
-    UpgradeCost { self_pages: 120, other_pages: 200, purple_pages: 500,  blue_pages: 1200 },
-    UpgradeCost { self_pages: 160, other_pages: 240, purple_pages: 600,  blue_pages: 1500 },
-    UpgradeCost { self_pages: 200, other_pages: 320, purple_pages: 700,  blue_pages: 1800 },
-    UpgradeCost { self_pages: 240, other_pages: 400, purple_pages: 800,  blue_pages: 2100 },
-    UpgradeCost { self_pages: 280, other_pages: 480, purple_pages: 1000, blue_pages: 2400 },
+    UpgradeCost { self_pages: 0,   gold_pages: 80,  purple_pages: 100,  blue_pages: 200 },
+    UpgradeCost { self_pages: 0,   gold_pages: 80,  purple_pages: 100,  blue_pages: 200 },
+    UpgradeCost { self_pages: 40,  gold_pages: 80,  purple_pages: 150,  blue_pages: 350 },
+    UpgradeCost { self_pages: 80,  gold_pages: 80,  purple_pages: 200,  blue_pages: 500 },
+    UpgradeCost { self_pages: 80,  gold_pages: 120, purple_pages: 250,  blue_pages: 650 },
+    UpgradeCost { self_pages: 80,  gold_pages: 160, purple_pages: 350,  blue_pages: 900 },
+    UpgradeCost { self_pages: 120, gold_pages: 200, purple_pages: 500,  blue_pages: 1200 },
+    UpgradeCost { self_pages: 160, gold_pages: 240, purple_pages: 600,  blue_pages: 1500 },
+    UpgradeCost { self_pages: 200, gold_pages: 320, purple_pages: 700,  blue_pages: 1800 },
+    UpgradeCost { self_pages: 240, gold_pages: 400, purple_pages: 800,  blue_pages: 2100 },
+    UpgradeCost { self_pages: 280, gold_pages: 480, purple_pages: 1000, blue_pages: 2400 },
 ];
 
 /// Table 3: 返虚 百族 (返虚 + 百族, max 天3 = 11 levels)
 pub const COSTS_FANXU_BAIZU: [UpgradeCost; 11] = [
-    UpgradeCost { self_pages: 0,   other_pages: 120, purple_pages: 100,  blue_pages: 300 },
-    UpgradeCost { self_pages: 0,   other_pages: 120, purple_pages: 150,  blue_pages: 350 },
-    UpgradeCost { self_pages: 40,  other_pages: 160, purple_pages: 250,  blue_pages: 600 },
-    UpgradeCost { self_pages: 80,  other_pages: 160, purple_pages: 300,  blue_pages: 800 },
-    UpgradeCost { self_pages: 80,  other_pages: 240, purple_pages: 450,  blue_pages: 1100 },
-    UpgradeCost { self_pages: 80,  other_pages: 320, purple_pages: 500,  blue_pages: 1300 },
-    UpgradeCost { self_pages: 120, other_pages: 400, purple_pages: 600,  blue_pages: 1600 },
-    UpgradeCost { self_pages: 160, other_pages: 480, purple_pages: 750,  blue_pages: 1900 },
-    UpgradeCost { self_pages: 200, other_pages: 560, purple_pages: 900,  blue_pages: 2200 },
-    UpgradeCost { self_pages: 240, other_pages: 640, purple_pages: 1000, blue_pages: 2500 },
-    UpgradeCost { self_pages: 280, other_pages: 720, purple_pages: 1200, blue_pages: 2800 },
+    UpgradeCost { self_pages: 0,   gold_pages: 120, purple_pages: 100,  blue_pages: 300 },
+    UpgradeCost { self_pages: 0,   gold_pages: 120, purple_pages: 150,  blue_pages: 350 },
+    UpgradeCost { self_pages: 40,  gold_pages: 160, purple_pages: 250,  blue_pages: 600 },
+    UpgradeCost { self_pages: 80,  gold_pages: 160, purple_pages: 300,  blue_pages: 800 },
+    UpgradeCost { self_pages: 80,  gold_pages: 240, purple_pages: 450,  blue_pages: 1100 },
+    UpgradeCost { self_pages: 80,  gold_pages: 320, purple_pages: 500,  blue_pages: 1300 },
+    UpgradeCost { self_pages: 120, gold_pages: 400, purple_pages: 600,  blue_pages: 1600 },
+    UpgradeCost { self_pages: 160, gold_pages: 480, purple_pages: 750,  blue_pages: 1900 },
+    UpgradeCost { self_pages: 200, gold_pages: 560, purple_pages: 900,  blue_pages: 2200 },
+    UpgradeCost { self_pages: 240, gold_pages: 640, purple_pages: 1000, blue_pages: 2500 },
+    UpgradeCost { self_pages: 280, gold_pages: 720, purple_pages: 1200, blue_pages: 2800 },
 ];
 
 /// Table 4: 合体/大乘/渡劫 三系 (合体/大乘/渡劫 + 剑/火/雷, max 天5 = 13 levels)
 pub const COSTS_HETI_TRIPLE: [UpgradeCost; 13] = [
-    UpgradeCost { self_pages: 40,  other_pages: 120, purple_pages: 100,  blue_pages: 200 },
-    UpgradeCost { self_pages: 40,  other_pages: 120, purple_pages: 100,  blue_pages: 200 },
-    UpgradeCost { self_pages: 40,  other_pages: 120, purple_pages: 150,  blue_pages: 350 },
-    UpgradeCost { self_pages: 80,  other_pages: 120, purple_pages: 200,  blue_pages: 500 },
-    UpgradeCost { self_pages: 80,  other_pages: 160, purple_pages: 250,  blue_pages: 650 },
-    UpgradeCost { self_pages: 120, other_pages: 200, purple_pages: 350,  blue_pages: 900 },
-    UpgradeCost { self_pages: 120, other_pages: 240, purple_pages: 500,  blue_pages: 1200 },
-    UpgradeCost { self_pages: 160, other_pages: 280, purple_pages: 600,  blue_pages: 1500 },
-    UpgradeCost { self_pages: 200, other_pages: 360, purple_pages: 700,  blue_pages: 1800 },
-    UpgradeCost { self_pages: 240, other_pages: 440, purple_pages: 800,  blue_pages: 2100 },
-    UpgradeCost { self_pages: 280, other_pages: 520, purple_pages: 1000, blue_pages: 2400 },
-    UpgradeCost { self_pages: 320, other_pages: 600, purple_pages: 1000, blue_pages: 2400 },
-    UpgradeCost { self_pages: 360, other_pages: 680, purple_pages: 1000, blue_pages: 2400 },
+    UpgradeCost { self_pages: 40,  gold_pages: 120, purple_pages: 100,  blue_pages: 200 },
+    UpgradeCost { self_pages: 40,  gold_pages: 120, purple_pages: 100,  blue_pages: 200 },
+    UpgradeCost { self_pages: 40,  gold_pages: 120, purple_pages: 150,  blue_pages: 350 },
+    UpgradeCost { self_pages: 80,  gold_pages: 120, purple_pages: 200,  blue_pages: 500 },
+    UpgradeCost { self_pages: 80,  gold_pages: 160, purple_pages: 250,  blue_pages: 650 },
+    UpgradeCost { self_pages: 120, gold_pages: 200, purple_pages: 350,  blue_pages: 900 },
+    UpgradeCost { self_pages: 120, gold_pages: 240, purple_pages: 500,  blue_pages: 1200 },
+    UpgradeCost { self_pages: 160, gold_pages: 280, purple_pages: 600,  blue_pages: 1500 },
+    UpgradeCost { self_pages: 200, gold_pages: 360, purple_pages: 700,  blue_pages: 1800 },
+    UpgradeCost { self_pages: 240, gold_pages: 440, purple_pages: 800,  blue_pages: 2100 },
+    UpgradeCost { self_pages: 280, gold_pages: 520, purple_pages: 1000, blue_pages: 2400 },
+    UpgradeCost { self_pages: 320, gold_pages: 600, purple_pages: 1000, blue_pages: 2400 },
+    UpgradeCost { self_pages: 360, gold_pages: 680, purple_pages: 1000, blue_pages: 2400 },
 ];
 
 /// Table 5: 合体/大乘 百族 (合体/大乘 + 百族, max 天3 = 11 levels)
 pub const COSTS_HETI_BAIZU: [UpgradeCost; 11] = [
-    UpgradeCost { self_pages: 0,   other_pages: 160, purple_pages: 100,  blue_pages: 300 },
-    UpgradeCost { self_pages: 0,   other_pages: 160, purple_pages: 150,  blue_pages: 350 },
-    UpgradeCost { self_pages: 40,  other_pages: 200, purple_pages: 250,  blue_pages: 600 },
-    UpgradeCost { self_pages: 80,  other_pages: 200, purple_pages: 300,  blue_pages: 800 },
-    UpgradeCost { self_pages: 80,  other_pages: 280, purple_pages: 450,  blue_pages: 1100 },
-    UpgradeCost { self_pages: 80,  other_pages: 360, purple_pages: 500,  blue_pages: 1300 },
-    UpgradeCost { self_pages: 120, other_pages: 440, purple_pages: 600,  blue_pages: 1600 },
-    UpgradeCost { self_pages: 160, other_pages: 520, purple_pages: 750,  blue_pages: 1900 },
-    UpgradeCost { self_pages: 200, other_pages: 600, purple_pages: 900,  blue_pages: 2200 },
-    UpgradeCost { self_pages: 240, other_pages: 680, purple_pages: 1000, blue_pages: 2500 },
-    UpgradeCost { self_pages: 280, other_pages: 760, purple_pages: 1200, blue_pages: 2800 },
+    UpgradeCost { self_pages: 0,   gold_pages: 160, purple_pages: 100,  blue_pages: 300 },
+    UpgradeCost { self_pages: 0,   gold_pages: 160, purple_pages: 150,  blue_pages: 350 },
+    UpgradeCost { self_pages: 40,  gold_pages: 200, purple_pages: 250,  blue_pages: 600 },
+    UpgradeCost { self_pages: 80,  gold_pages: 200, purple_pages: 300,  blue_pages: 800 },
+    UpgradeCost { self_pages: 80,  gold_pages: 280, purple_pages: 450,  blue_pages: 1100 },
+    UpgradeCost { self_pages: 80,  gold_pages: 360, purple_pages: 500,  blue_pages: 1300 },
+    UpgradeCost { self_pages: 120, gold_pages: 440, purple_pages: 600,  blue_pages: 1600 },
+    UpgradeCost { self_pages: 160, gold_pages: 520, purple_pages: 750,  blue_pages: 1900 },
+    UpgradeCost { self_pages: 200, gold_pages: 600, purple_pages: 900,  blue_pages: 2200 },
+    UpgradeCost { self_pages: 240, gold_pages: 680, purple_pages: 1000, blue_pages: 2500 },
+    UpgradeCost { self_pages: 280, gold_pages: 760, purple_pages: 1200, blue_pages: 2800 },
 ];
 
 /// Table 6: 大乘 百族 (大乘 + 百族, max 天5 = 13 levels)
 pub const COSTS_DACHENG_BAIZU: [UpgradeCost; 13] = [
-    UpgradeCost { self_pages: 0,   other_pages: 160, purple_pages: 100,  blue_pages: 300 },
-    UpgradeCost { self_pages: 0,   other_pages: 160, purple_pages: 150,  blue_pages: 350 },
-    UpgradeCost { self_pages: 40,  other_pages: 200, purple_pages: 250,  blue_pages: 600 },
-    UpgradeCost { self_pages: 80,  other_pages: 200, purple_pages: 300,  blue_pages: 800 },
-    UpgradeCost { self_pages: 80,  other_pages: 280, purple_pages: 450,  blue_pages: 1100 },
-    UpgradeCost { self_pages: 80,  other_pages: 360, purple_pages: 500,  blue_pages: 1300 },
-    UpgradeCost { self_pages: 120, other_pages: 440, purple_pages: 600,  blue_pages: 1600 },
-    UpgradeCost { self_pages: 160, other_pages: 520, purple_pages: 750,  blue_pages: 1900 },
-    UpgradeCost { self_pages: 200, other_pages: 600, purple_pages: 900,  blue_pages: 2200 },
-    UpgradeCost { self_pages: 240, other_pages: 680, purple_pages: 1000, blue_pages: 2500 },
-    UpgradeCost { self_pages: 280, other_pages: 760, purple_pages: 1200, blue_pages: 2800 },
-    UpgradeCost { self_pages: 320, other_pages: 840, purple_pages: 1400, blue_pages: 3100 },
-    UpgradeCost { self_pages: 360, other_pages: 920, purple_pages: 1600, blue_pages: 3400 },
+    UpgradeCost { self_pages: 0,   gold_pages: 160, purple_pages: 100,  blue_pages: 300 },
+    UpgradeCost { self_pages: 0,   gold_pages: 160, purple_pages: 150,  blue_pages: 350 },
+    UpgradeCost { self_pages: 40,  gold_pages: 200, purple_pages: 250,  blue_pages: 600 },
+    UpgradeCost { self_pages: 80,  gold_pages: 200, purple_pages: 300,  blue_pages: 800 },
+    UpgradeCost { self_pages: 80,  gold_pages: 280, purple_pages: 450,  blue_pages: 1100 },
+    UpgradeCost { self_pages: 80,  gold_pages: 360, purple_pages: 500,  blue_pages: 1300 },
+    UpgradeCost { self_pages: 120, gold_pages: 440, purple_pages: 600,  blue_pages: 1600 },
+    UpgradeCost { self_pages: 160, gold_pages: 520, purple_pages: 750,  blue_pages: 1900 },
+    UpgradeCost { self_pages: 200, gold_pages: 600, purple_pages: 900,  blue_pages: 2200 },
+    UpgradeCost { self_pages: 240, gold_pages: 680, purple_pages: 1000, blue_pages: 2500 },
+    UpgradeCost { self_pages: 280, gold_pages: 760, purple_pages: 1200, blue_pages: 2800 },
+    UpgradeCost { self_pages: 320, gold_pages: 840, purple_pages: 1400, blue_pages: 3100 },
+    UpgradeCost { self_pages: 360, gold_pages: 920, purple_pages: 1600, blue_pages: 3400 },
 ];
 
 /// 根据分类获取消耗表
@@ -297,7 +297,7 @@ pub fn total_cost_between(from: SkillLevel, to: SkillLevel, realm: Realm, skill_
     let ti = to.index();
     let mut result = UpgradeCost {
         self_pages: 0,
-        other_pages: 0,
+        gold_pages: 0,
         purple_pages: 0,
         blue_pages: 0,
     };
@@ -307,7 +307,7 @@ pub fn total_cost_between(from: SkillLevel, to: SkillLevel, realm: Realm, skill_
         let cost_idx = i - 1; // 0-based into cost table
         if cost_idx >= costs.len() { break; }
         result.self_pages += costs[cost_idx].self_pages;
-        result.other_pages += costs[cost_idx].other_pages;
+        result.gold_pages += costs[cost_idx].gold_pages;
         result.purple_pages += costs[cost_idx].purple_pages;
         result.blue_pages += costs[cost_idx].blue_pages;
     }
@@ -439,8 +439,8 @@ pub struct UpgradeAction {
     #[serde(rename = "selfPagesUsed")]
     pub self_pages_used: u32,
     /// key = donor skill index as string, value = pages consumed
-    #[serde(rename = "otherPagesConsumed")]
-    pub other_pages_consumed: std::collections::HashMap<String, u32>,
+    #[serde(rename = "goldPagesConsumed")]
+    pub gold_pages_consumed: std::collections::HashMap<String, u32>,
     #[serde(rename = "purplePagesUsed")]
     pub purple_pages_used: u32,
     #[serde(rename = "bluePagesUsed")]

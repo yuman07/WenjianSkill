@@ -32,7 +32,7 @@ fn skill_gets_income(skill: &CombatSkillInput, week: u32) -> u32 {
 // Phase 1: Feasibility check & binary search
 //
 // Model: each skill accumulates pages from its own income.
-// 仙品 comes from OTHER skills' surplus (pages beyond own 本体 need).
+// 金色 comes from OTHER skills' surplus (pages beyond own 本体 need).
 // Same-shop skills can also convert surplus → 本体 for each other.
 // Conservation law still holds per-shop.
 // ============================================================
@@ -54,7 +54,7 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
         if s.current_level < s.target_level {
             let cost = total_cost_between(s.current_level, s.target_level, s.realm, s.skill_class);
             self_needed[i] = cost.self_pages;
-            total_other += cost.other_pages;
+            total_other += cost.gold_pages;
             total_purple += cost.purple_pages;
             total_blue += cost.blue_pages;
         }
@@ -68,7 +68,7 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
     }
 
     // Per-shop: skill pages + fodder pool must cover total self needed
-    // Fodder pool pages can be converted to same-shop skill 本体 OR used as 仙品
+    // Fodder pool pages can be converted to same-shop skill 本体 OR used as 金色
     let mut fodder_pool = vec![0u32; 5]; // per-shop fodder pool over W weeks
     for &shop in &Shop::ALL {
         fodder_pool[shop.index()] = adv.fodder_income.total_pages(shop, weeks);
@@ -101,7 +101,7 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
         return false;
     }
 
-    // Precompute per-shop aggregates for 仙品 checks
+    // Precompute per-shop aggregates for 金色 checks
     let mut shop_pages_sum = [0u32; 5];
     let mut shop_self_sum = [0u32; 5];
     for i in 0..n {
@@ -120,7 +120,7 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
         return false;
     }
 
-    // Per-skill 仙品 check: skill i can't use its OWN surplus as its own 仙品.
+    // Per-skill 金色 check: skill i can't use its OWN surplus as its own 金色.
     // Recompute i's shop surplus EXCLUDING skill i, to get the true available.
     // (Naive "total_surplus - own_surplus" overcounts when intra-shop conversions
     // consume part of the individual surplus.)
@@ -134,7 +134,7 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
             .saturating_sub(shop_self_sum[si] - self_needed[i]);
         let available_for_i = (total_surplus - shop_surplus[si]) + shop_surplus_without_i;
 
-        if available_for_i < cost.other_pages {
+        if available_for_i < cost.gold_pages {
             return false;
         }
     }
@@ -288,7 +288,7 @@ impl SimState {
         cost.self_pages.saturating_sub(self.pages[i])
     }
 
-    /// Surplus pages available as 仙品 donor (pages beyond own remaining 本体 need)
+    /// Surplus pages available as 金色 donor (pages beyond own remaining 本体 need)
     fn donatable(&self, i: usize) -> u32 {
         if self.levels[i] >= self.targets[i] {
             return self.pages[i]; // All pages are surplus
@@ -297,7 +297,7 @@ impl SimState {
         self.pages[i].saturating_sub(cost.self_pages)
     }
 
-    /// Fodder pool pages in `shop` that are safe to use as 仙品 without starving
+    /// Fodder pool pages in `shop` that are safe to use as 金色 without starving
     /// same-shop 本体 conversions. `exclude`: the skill being upgraded (can't
     /// donate to itself, so excluded from intra-shop surplus calculation).
     fn fodder_available_as_other(&self, shop: Shop, exclude: usize, n: usize) -> u32 {
@@ -317,7 +317,7 @@ impl SimState {
         pool.saturating_sub(needed_from_pool)
     }
 
-    /// Try upgrade skill i, consuming 仙品 from other skills' surplus
+    /// Try upgrade skill i, consuming 金色 from other skills' surplus
     fn try_upgrade(&mut self, i: usize, n: usize) -> Option<UpgradeAction> {
         if self.levels[i] >= self.targets[i] { return None; }
         let next = self.levels[i].next()?;
@@ -330,7 +330,7 @@ impl SimState {
         if self.pages[i] < cost.self_pages { return None; }
         if self.purple < cost.purple_pages || self.blue < cost.blue_pages { return None; }
 
-        // Check 仙品: other skills' surplus + fodder pools (only the portion safe
+        // Check 金色: other skills' surplus + fodder pools (only the portion safe
         // to use without starving same-shop conversions)
         let total_donatable: u32 = (0..n).filter(|&j| j != i).map(|j| self.donatable(j)).sum();
         let mut fodder_avail = [0u32; 5];
@@ -338,15 +338,15 @@ impl SimState {
             fodder_avail[shop.index()] = self.fodder_available_as_other(shop, i, n);
         }
         let total_fodder_available: u32 = fodder_avail.iter().sum();
-        if total_donatable + total_fodder_available < cost.other_pages { return None; }
+        if total_donatable + total_fodder_available < cost.gold_pages { return None; }
 
         // Execute
         self.pages[i] -= cost.self_pages;
 
-        // Consume 仙品: fodder pools first (low rarity, only safe portion),
+        // Consume 金色: fodder pools first (low rarity, only safe portion),
         // then other skills' surplus
         let mut consumed: HashMap<String, u32> = HashMap::new();
-        let mut remaining = cost.other_pages;
+        let mut remaining = cost.gold_pages;
         let mut shop_order: Vec<Shop> = Shop::ALL.to_vec();
         shop_order.sort_by_key(|s| s.rarity());
 
@@ -382,7 +382,7 @@ impl SimState {
             from_level: from,
             to_level: next,
             self_pages_used: cost.self_pages,
-            other_pages_consumed: consumed,
+            gold_pages_consumed: consumed,
             purple_pages_used: cost.purple_pages,
             blue_pages_used: cost.blue_pages,
         })
@@ -401,15 +401,15 @@ fn do_conversions_and_upgrades(
     let mut free_left = free_conv;
     loop {
         // Try upgrading all possible
-        // Priority: (1) upgrades needing less 仙品 first (avoid competing for shared resource),
-        //           (2) among equal 仙品 cost, smaller gap first (finish sooner → free surplus)
+        // Priority: (1) upgrades needing less 金色 first (avoid competing for shared resource),
+        //           (2) among equal 金色 cost, smaller gap first (finish sooner → free surplus)
         let mut upgraded = false;
         loop {
             let mut order: Vec<usize> = (0..n).filter(|&i| state.levels[i] < state.targets[i]).collect();
             order.sort_by_key(|&i| {
                 let next = state.levels[i].next().unwrap();
                 let costs = upgrade_costs_for_category(cost_category(state.realms[i], state.skill_classes[i]));
-                let other_cost = costs.get(next.index() - 1).map_or(0, |c| c.other_pages);
+                let other_cost = costs.get(next.index() - 1).map_or(0, |c| c.gold_pages);
                 let gap = state.targets[i].index() as i32 - state.levels[i].index() as i32;
                 (other_cost, gap)
             });
@@ -614,7 +614,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
         let cost = total_cost_between(s.current_level, s.target_level, s.realm, s.skill_class);
         total_purple_need += cost.purple_pages;
         total_blue_need += cost.blue_pages;
-        total_other_need += cost.other_pages;
+        total_other_need += cost.gold_pages;
     }
 
     let max_purple = input.purple_pages + adv.weekly_purple_income * MAX_WEEKS;
@@ -663,7 +663,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
         }
     }
 
-    // Global 仙品 check (combat skill surplus + fodder pool income)
+    // Global 金色 check (combat skill surplus + fodder pool income)
     let total_surplus: u32 = Shop::ALL.iter().map(|&shop| {
         let sp: u32 = (0..n).filter(|&i| input.combat_skills[i].shop == shop)
             .map(|i| input.combat_skills[i].remaining_pages + skill_income_pages(&input.combat_skills[i], MAX_WEEKS)).sum();
@@ -678,7 +678,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
     }).sum();
     if total_surplus < total_other_need {
         reasons.push(format!(
-            "仙品（狗粮）不足：合计需要 {}，所有来源最多可提供 {}",
+            "金色（狗粮）不足：合计需要 {}，所有来源最多可提供 {}",
             total_other_need, total_surplus
         ));
     }
