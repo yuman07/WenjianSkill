@@ -130,53 +130,53 @@ WenjianSkill 采用 Tauri 2 架构，前端使用 React 渲染 UI，后端使用
 ### 架构
 
 ```
-┌─────────────────────────────────────────────────┐
-│                    Tauri Shell                   │
-│                                                  │
-│  ┌──────────────────┐    ┌───────────────────┐  │
-│  │     Frontend      │    │      Backend      │  │
-│  │  React + Vite     │◄──►│      Rust         │  │
-│  │                   │IPC │                   │  │
-│  │  App.tsx          │    │  lib.rs           │  │
-│  │  ├─ SkillCard ×6  │    │  ├─ models.rs     │  │
-│  │  ├─ PlanOutput    │    │  └─ planner.rs    │  │
-│  │  └─ persistence   │    │     ├─ Phase 1    │  │
-│  │                   │    │     ├─ Phase 2    │  │
-│  │  Tailwind CSS     │    │     └─ Phase 3    │  │
-│  └──────────────────┘    └───────────────────┘  │
-│                                                  │
-│  ┌──────────────────────────────────────────┐   │
-│  │  Tauri Plugins: dialog, fs, store, shell │   │
-│  └──────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────┘
++------------------------------------------------------+
+|                      Tauri Shell                     |
+|                                                      |
+|  +--------------------+     +--------------------+   |
+|  |      Frontend      |     |      Backend       |   |
+|  |  React + Vite      | <-> |  Rust              |   |
+|  |                    | IPC |                    |   |
+|  |  App.tsx           |     |  lib.rs            |   |
+|  |    SkillCard x6    |     |    models.rs       |   |
+|  |    PlanOutput      |     |    planner.rs      |   |
+|  |    persistence     |     |      Phase 1       |   |
+|  |                    |     |      Phase 2       |   |
+|  |  Tailwind CSS      |     |      Phase 3       |   |
+|  +--------------------+     +--------------------+   |
+|                                                      |
+|  +-----------------------------------------------+   |
+|  |  Tauri Plugins: dialog, fs, store, shell      |   |
+|  +-----------------------------------------------+   |
++------------------------------------------------------+
 ```
 
 ### 项目结构
 
 ```
-├── src/                        # 前端（React + TypeScript）
-│   ├── App.tsx                 #   主界面：管理 6 个技能输入状态、材料设置、调用后端
-│   ├── components/
-│   │   ├── SkillCard.tsx       #   技能卡片：境界/职业/商店/等级/书页输入
-│   │   └── PlanOutput.tsx      #   规划结果：逐周展开卡片、导出 TXT
-│   ├── types/
-│   │   ├── game.ts             #   游戏数据：枚举定义、升级消耗表、商店收入默认值
-│   │   └── planner.ts          #   规划器接口：输入/输出类型、周计划、快照
-│   └── utils/
-│       ├── persistence.ts      #   本地持久化（Tauri plugin-store）
-│       ├── exportText.ts       #   导出规划方案为格式化文本
-│       └── donorLabel.ts       #   狗粮池/技能索引 → 显示名称映射
-├── src-tauri/                  # 后端（Rust）
-│   ├── src/
-│   │   ├── main.rs             #   Tauri 入口：注册插件和命令
-│   │   ├── lib.rs              #   导出 generate_plan 命令，衔接前后端
-│   │   ├── models.rs           #   数据模型：枚举、消耗表、输入输出结构体
-│   │   └── planner.rs          #   核心算法：二分搜索 + 穷举 bonus + 逐周模拟
-│   ├── tauri.conf.json         #   Tauri 配置：窗口尺寸、打包、最低系统版本
-│   └── Cargo.toml              #   Rust 依赖与发布优化配置
-├── devbox.json                 # 开发环境依赖（Node.js、Rust）
-├── package.json                # 前端依赖
-└── vite.config.ts              # Vite 构建配置
+|-- src/                        # 前端（React + TypeScript）
+|   |-- App.tsx                 #   主界面：管理 6 个技能输入状态、材料设置、调用后端
+|   |-- components/
+|   |   |-- SkillCard.tsx       #   技能卡片：境界/职业/商店/等级/书页输入
+|   |   `-- PlanOutput.tsx      #   规划结果：逐周展开卡片、导出 TXT
+|   |-- types/
+|   |   |-- game.ts             #   游戏数据：枚举定义、升级消耗表、商店收入默认值
+|   |   `-- planner.ts          #   规划器接口：输入/输出类型、周计划、快照
+|   `-- utils/
+|       |-- persistence.ts      #   本地持久化（Tauri plugin-store）
+|       |-- exportText.ts       #   导出规划方案为格式化文本
+|       `-- donorLabel.ts       #   狗粮池/技能索引 -> 显示名称映射
+|-- src-tauri/                  # 后端（Rust）
+|   |-- src/
+|   |   |-- main.rs             #   Tauri 入口：注册插件和命令
+|   |   |-- lib.rs              #   导出 generate_plan 命令，衔接前后端
+|   |   |-- models.rs           #   数据模型：枚举、消耗表、输入输出结构体
+|   |   `-- planner.rs          #   核心算法：二分搜索 + 穷举 bonus + 逐周模拟
+|   |-- tauri.conf.json         #   Tauri 配置：窗口尺寸、打包、最低系统版本
+|   `-- Cargo.toml              #   Rust 依赖与发布优化配置
+|-- devbox.json                 # 开发环境依赖（Node.js、Rust）
+|-- package.json                # 前端依赖
+`-- vite.config.ts              # Vite 构建配置
 ```
 
 ## License
