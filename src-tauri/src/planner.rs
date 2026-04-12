@@ -3,6 +3,9 @@ use std::collections::HashMap;
 
 const PAGES_PER_UNIT: u32 = 40;
 const MAX_WEEKS: u32 = 500;
+/// First N free conversions per week are used before conversion stones;
+/// any remaining free conversions beyond this threshold are used after stones.
+const PRIORITY_FREE_CONV: u32 = 3;
 
 // ============================================================
 // Income helper
@@ -442,6 +445,8 @@ impl SimState {
 
 /// Interleave conversions and upgrades until no more progress.
 /// `free_conv` is the number of free conversions available this cycle.
+///
+/// Conversion slot priority: first 3 free → stones → remaining free.
 fn do_conversions_and_upgrades(
     state: &mut SimState,
     free_conv: u32,
@@ -449,7 +454,10 @@ fn do_conversions_and_upgrades(
     upgrades: &mut Vec<UpgradeAction>,
 ) {
     let n = state.levels.len();
-    let mut free_left = free_conv;
+    // Split free conversions into priority tier (first 3) and extra tier (rest).
+    // Priority free is used before stones; extra free is used after stones.
+    let mut priority_left = free_conv.min(PRIORITY_FREE_CONV);
+    let mut extra_left = free_conv - priority_left;
     loop {
         // Try upgrading all possible
         // Priority: (1) upgrades needing less 金色 first (avoid competing for shared resource),
@@ -480,7 +488,7 @@ fn do_conversions_and_upgrades(
         // Only consider skills whose NEXT level actually needs more self-pages than
         // they currently have — skills blocked on gold/purple/blue (not self-pages)
         // gain nothing from conversion and would waste the slot.
-        if free_left == 0 && state.stones == 0 { break; }
+        if priority_left == 0 && state.stones == 0 && extra_left == 0 { break; }
         let mut candidates: Vec<usize> = (0..n)
             .filter(|&i| {
                 if state.levels[i] >= state.targets[i] { return false; }
@@ -503,25 +511,24 @@ fn do_conversions_and_upgrades(
         for &i in &candidates {
             let shop = state.shops[i];
 
+            // Try to acquire a conversion slot: priority free → stone → extra free
+            macro_rules! try_use_slot {
+                () => {
+                    if priority_left > 0 { priority_left -= 1; Some(false) }
+                    else if state.stones > 0 { state.stones -= 1; Some(true) }
+                    else if extra_left > 0 { extra_left -= 1; Some(false) }
+                    else { None }
+                };
+            }
+
             // Source 1: same-shop fodder pool
             if state.fodder_pools[shop.index()] >= PAGES_PER_UNIT {
-                if free_left > 0 {
-                    free_left -= 1;
-                    state.fodder_pools[shop.index()] -= PAGES_PER_UNIT;
-                    state.pages[i] += PAGES_PER_UNIT;
-                    conversions.push(ConversionAction {
-                        shop, target_skill_index: i, from_skill_index: usize::MAX, // pool
-                        used_stone: false, pages: PAGES_PER_UNIT,
-                    });
-                    converted = true;
-                    break;
-                } else if state.stones > 0 {
-                    state.stones -= 1;
+                if let Some(used_stone) = try_use_slot!() {
                     state.fodder_pools[shop.index()] -= PAGES_PER_UNIT;
                     state.pages[i] += PAGES_PER_UNIT;
                     conversions.push(ConversionAction {
                         shop, target_skill_index: i, from_skill_index: usize::MAX,
-                        used_stone: true, pages: PAGES_PER_UNIT,
+                        used_stone, pages: PAGES_PER_UNIT,
                     });
                     converted = true;
                     break;
@@ -534,23 +541,12 @@ fn do_conversions_and_upgrades(
                 .collect();
             donors.sort_by(|a, b| state.donatable(*b).cmp(&state.donatable(*a)));
             if let Some(&donor) = donors.first() {
-                if free_left > 0 {
-                    free_left -= 1;
+                if let Some(used_stone) = try_use_slot!() {
                     state.pages[donor] -= PAGES_PER_UNIT;
                     state.pages[i] += PAGES_PER_UNIT;
                     conversions.push(ConversionAction {
                         shop, target_skill_index: i, from_skill_index: donor,
-                        used_stone: false, pages: PAGES_PER_UNIT,
-                    });
-                    converted = true;
-                    break;
-                } else if state.stones > 0 {
-                    state.stones -= 1;
-                    state.pages[donor] -= PAGES_PER_UNIT;
-                    state.pages[i] += PAGES_PER_UNIT;
-                    conversions.push(ConversionAction {
-                        shop, target_skill_index: i, from_skill_index: donor,
-                        used_stone: true, pages: PAGES_PER_UNIT,
+                        used_stone, pages: PAGES_PER_UNIT,
                     });
                     converted = true;
                     break;
