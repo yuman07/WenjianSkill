@@ -57,11 +57,11 @@ export interface PlannerInput {
 
 /** 默认设置 */
 export function defaultAdvancedSettings(): AdvancedSettings {
-  const f = (): FodderIncome => ({ initialPages: 0, cycleWeeks: 2, batchCount: 1 });
+  const f = (cycleWeeks: number): FodderIncome => ({ initialPages: 0, cycleWeeks, batchCount: 1 });
   return {
     conversionStones: 0,
     freeConversionsPerWeek: 3,
-    fodderIncome: { 论剑: f(), 诸天: f(), 宗门: f(), 道蕴: f(), 百族: f() },
+    fodderIncome: { 论剑: f(1), 诸天: f(1), 宗门: f(1), 道蕴: f(3), 百族: f(4) },
     weeklyPurpleIncome: 0,
     weeklyBlueIncome: 0,
   };

@@ -42,8 +42,8 @@ export interface ShopIncomeDefault {
 
 export function defaultIncomeForShop(shop: Shop): ShopIncomeDefault {
   switch (shop) {
-    case "论剑": return { cycleWeeks: 1, batchCount: 1 };
-    case "诸天": return { cycleWeeks: 1, batchCount: 1 };
+    case "论剑": return { cycleWeeks: 2, batchCount: 2 };
+    case "诸天": return { cycleWeeks: 2, batchCount: 2 };
     case "宗门": return { cycleWeeks: 1, batchCount: 1 };
     case "道蕴": return { cycleWeeks: 3, batchCount: 1 };
     case "百族": return { cycleWeeks: 4, batchCount: 1 };
