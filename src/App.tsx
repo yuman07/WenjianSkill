@@ -137,7 +137,7 @@ export default function App() {
           <div className="relative ml-auto self-center" ref={infoRef}>
             <button
               onClick={() => setShowInfo((v) => !v)}
-              className="w-6 h-6 rounded-full border border-gray-300 text-gray-400 hover:border-amber-400 hover:text-amber-500 transition-colors text-xs font-serif font-bold leading-none cursor-pointer flex items-center justify-center"
+              className="w-4.5 h-4.5 rounded-full border border-gray-400 text-gray-500 hover:border-amber-400 hover:text-amber-500 transition-colors text-[11px] font-serif font-semibold leading-none cursor-pointer flex items-center justify-center"
               title="关于"
             >
               i
