@@ -26,7 +26,21 @@ export default function App() {
   const [output, setOutput] = useState<PlannerOutput | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
+  const infoRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
+
+  // Close info popover when clicking outside
+  useEffect(() => {
+    if (!showInfo) return;
+    const handler = (e: MouseEvent) => {
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
+        setShowInfo(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showInfo]);
 
   // Load persisted state on startup, merging with defaults for forward compatibility
   useEffect(() => {
@@ -120,6 +134,24 @@ export default function App() {
           <h1 className="text-xl font-bold text-gray-800">问剑长生 · 神通规划</h1>
           <button onClick={() => open("https://github.com/yuman07/WenjianSkill")}
             className="text-xs text-blue-400 hover:text-blue-600 transition-colors cursor-pointer">v1.0.0</button>
+          <div className="relative ml-auto self-center" ref={infoRef}>
+            <button
+              onClick={() => setShowInfo((v) => !v)}
+              className="w-6 h-6 rounded-full border border-gray-300 text-gray-400 hover:border-amber-400 hover:text-amber-500 transition-colors text-xs font-serif font-bold leading-none cursor-pointer flex items-center justify-center"
+              title="关于"
+            >
+              i
+            </button>
+            {showInfo && (
+              <div className="absolute right-0 top-8 w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  目前该版本可完美适配渡劫前的神通，渡劫的神通目前仍沿用大乘的神通升级消耗不一定准确，之后有准确数据后会再更新。
+                </p>
+                <hr className="my-3 border-gray-200" />
+                <p className="text-sm text-gray-500 text-right">千山暮雪-昆虫子</p>
+              </div>
+            )}
+          </div>
         </div>
         <p className="text-sm text-gray-500 mb-6">选择 6 个战斗神通，设定目标等级，生成最优升级路径</p>
 
