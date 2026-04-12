@@ -129,26 +129,28 @@ WenjianSkill 采用 Tauri 2 架构，前端使用 React 渲染 UI，后端使用
 
 ### 架构
 
-```
-+------------------------------------------------------+
-|                      Tauri Shell                     |
-|                                                      |
-|  +--------------------+     +--------------------+   |
-|  |      Frontend      |     |      Backend       |   |
-|  |  React + Vite      | <-> |  Rust              |   |
-|  |                    | IPC |                    |   |
-|  |  App.tsx           |     |  lib.rs            |   |
-|  |    SkillCard x6    |     |    models.rs       |   |
-|  |    PlanOutput      |     |    planner.rs      |   |
-|  |    persistence     |     |      Phase 1       |   |
-|  |                    |     |      Phase 2       |   |
-|  |  Tailwind CSS      |     |      Phase 3       |   |
-|  +--------------------+     +--------------------+   |
-|                                                      |
-|  +-----------------------------------------------+   |
-|  |  Tauri Plugins: dialog, fs, store, shell      |   |
-|  +-----------------------------------------------+   |
-+------------------------------------------------------+
+```mermaid
+graph TB
+    subgraph Tauri["Tauri Shell"]
+        direction LR
+        subgraph Frontend["Frontend · React + Vite"]
+            App["App.tsx"]
+            SkillCard["SkillCard x6"]
+            PlanOutput["PlanOutput"]
+            Persistence["persistence"]
+            Tailwind["Tailwind CSS"]
+        end
+        subgraph Backend["Backend · Rust"]
+            Lib["lib.rs"]
+            Models["models.rs"]
+            Planner["planner.rs"]
+            P1["Phase 1 · Binary Search"]
+            P2["Phase 2 · Exhaustive Bonus"]
+            P3["Phase 3 · Weekly Simulation"]
+        end
+        Frontend <-->|IPC| Backend
+        Plugins["Tauri Plugins: dialog · fs · store · shell"]
+    end
 ```
 
 ### 项目结构
