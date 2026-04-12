@@ -99,9 +99,9 @@
 | 后端算法 | Rust |
 | 构建工具 | Vite |
 
-## 开发
+## 开发 (macOS only)
 
-项目使用 [Devbox](https://www.jetify.com/devbox/) 管理所有开发依赖（Node.js、Rust 等），无需手动安装各语言工具链。
+项目使用 [Devbox](https://www.jetify.com/devbox/) 管理所有开发依赖（Node.js、Rust 等），无需手动安装各语言工具链。以下构建步骤仅适用于 macOS。
 
 ### 前置要求
 
