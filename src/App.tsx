@@ -133,7 +133,7 @@ export default function App() {
         <div className="flex items-baseline gap-2 mb-1">
           <h1 className="text-xl font-bold text-gray-800">问剑长生 · 神通规划</h1>
           <button onClick={() => open("https://github.com/yuman07/WenjianSkill")}
-            className="text-xs text-blue-400 hover:text-blue-600 transition-colors cursor-pointer">v1.0.0</button>
+            className="text-xs text-blue-400 hover:text-blue-600 transition-colors cursor-pointer">v{__APP_VERSION__}</button>
           <div className="relative ml-auto self-center" ref={infoRef}>
             <button
               onClick={() => setShowInfo((v) => !v)}
@@ -145,7 +145,7 @@ export default function App() {
             {showInfo && (
               <div className="absolute right-0 top-8 w-72 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  当前版本(v1.0.0)已完美适配渡劫期前所有神通。渡劫期神通暂沿用大乘期神通升级消耗数据，可能存在偏差，待获取准确数据后更新
+                  当前版本(v{__APP_VERSION__})已完美适配渡劫期前所有神通。渡劫期神通暂沿用大乘期神通升级消耗数据，可能存在偏差，待获取准确数据后更新
                 </p>
                 <hr className="my-3 border-gray-200" />
                 <p className="text-sm text-gray-500 text-right">千山暮雪-昆虫子</p>
