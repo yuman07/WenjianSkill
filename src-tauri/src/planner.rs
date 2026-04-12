@@ -157,9 +157,10 @@ fn find_minimum_weeks(input: &PlannerInput) -> Option<u32> {
 // Phase 2: Bonus levels — exhaustive search (provably optimal)
 //
 // Search space: each skill can gain 0..K bonus levels beyond its
-// target, where K = max_level - target (at most 5). With 6 skills
-// this is at most 5^6 = 15,625 combinations. Each feasibility
-// check is O(n), so the total is ~100K ops — runs in microseconds.
+// target, where K = max_level - target (up to 13 if target is 1星
+// and max is 天5). Branch-and-bound pruning (trying high bonuses
+// first for early good baselines) keeps the effective search small.
+// Each feasibility check is O(n), so the total runs in microseconds.
 // ============================================================
 
 fn find_bonus_levels(input: &PlannerInput, min_weeks: u32) -> Vec<SkillLevel> {
@@ -317,6 +318,36 @@ impl SimState {
         pool.saturating_sub(needed_from_pool)
     }
 
+    /// Per-shop gold budget: max gold extractable without starving same-shop conversions.
+    /// Uses total self-cost (not deficit) to correctly reserve pages each skill needs for
+    /// its own upgrades, matching the Phase 1 feasibility check formula.
+    fn shop_gold_budgets(&self, exclude: usize, n: usize) -> [u32; 5] {
+        let mut budgets = [0u32; 5];
+        for &shop in &Shop::ALL {
+            let si = shop.index();
+            let total_pages: u32 = (0..n)
+                .filter(|&j| self.shops[j] == shop)
+                .map(|j| self.pages[j])
+                .sum();
+            let total_self_cost: u32 = (0..n)
+                .filter(|&j| self.shops[j] == shop && self.levels[j] < self.targets[j])
+                .map(|j| {
+                    total_cost_between(self.levels[j], self.targets[j], self.realms[j], self.skill_classes[j]).self_pages
+                })
+                .sum();
+            // Shop surplus: total pages + fodder beyond all self-costs
+            let total_surplus = (total_pages + self.fodder_pools[si]).saturating_sub(total_self_cost);
+            // Excluded skill's surplus can't be used as its own gold
+            let exclude_surplus = if self.shops[exclude] == shop {
+                self.donatable(exclude)
+            } else {
+                0
+            };
+            budgets[si] = total_surplus.saturating_sub(exclude_surplus);
+        }
+        budgets
+    }
+
     /// Try upgrade skill i, consuming 金色 from other skills' surplus
     fn try_upgrade(&mut self, i: usize, n: usize) -> Option<UpgradeAction> {
         if self.levels[i] >= self.targets[i] { return None; }
@@ -330,47 +361,63 @@ impl SimState {
         if self.pages[i] < cost.self_pages { return None; }
         if self.purple < cost.purple_pages || self.blue < cost.blue_pages { return None; }
 
-        // Check 金色: other skills' surplus + fodder pools (only the portion safe
-        // to use without starving same-shop conversions)
-        let total_donatable: u32 = (0..n).filter(|&j| j != i).map(|j| self.donatable(j)).sum();
-        let mut fodder_avail = [0u32; 5];
-        for &shop in &Shop::ALL {
-            fodder_avail[shop.index()] = self.fodder_available_as_other(shop, i, n);
-        }
-        let total_fodder_available: u32 = fodder_avail.iter().sum();
-        if total_donatable + total_fodder_available < cost.gold_pages { return None; }
+        // Check 金色: per-shop gold budget ensures we don't starve same-shop conversions
+        let mut gold_budgets = self.shop_gold_budgets(i, n);
+        let total_gold_available: u32 = gold_budgets.iter().sum();
+        if total_gold_available < cost.gold_pages { return None; }
 
         // Execute
         self.pages[i] -= cost.self_pages;
 
-        // Consume 金色: fodder pools first (low rarity, only safe portion),
-        // then other skills' surplus
+        // Consume 金色: fodder pools first (low rarity), then skills' surplus.
+        // Respect per-shop gold budget to preserve conversion capacity.
         let mut consumed: HashMap<String, u32> = HashMap::new();
         let mut remaining = cost.gold_pages;
         let mut shop_order: Vec<Shop> = Shop::ALL.to_vec();
         shop_order.sort_by_key(|s| s.rarity());
 
-        // From fodder pools (only the portion not reserved for same-shop conversions)
+        // From fodder pools (limited by shop gold budget)
         for &shop in &shop_order {
             if remaining == 0 { break; }
-            let take = fodder_avail[shop.index()].min(remaining);
+            let si = shop.index();
+            let safe = self.fodder_available_as_other(shop, i, n);
+            let take = safe.min(remaining).min(gold_budgets[si]);
             if take > 0 {
-                self.fodder_pools[shop.index()] -= take;
-                consumed.insert(format!("pool_{}", shop.index()), take);
+                self.fodder_pools[si] -= take;
+                gold_budgets[si] -= take;
+                consumed.insert(format!("pool_{}", si), take);
                 remaining -= take;
             }
         }
-        // Then from other combat skills' surplus
+        // Then from other combat skills' surplus (limited by shop gold budget)
         let mut donors: Vec<usize> = (0..n).filter(|&j| j != i).collect();
         donors.sort_by_key(|&j| self.shops[j].rarity());
         for &j in &donors {
             if remaining == 0 { break; }
-            let give = self.donatable(j).min(remaining);
+            let si = self.shops[j].index();
+            let give = self.donatable(j).min(remaining).min(gold_budgets[si]);
             if give > 0 {
                 self.pages[j] -= give;
+                gold_budgets[si] -= give;
                 consumed.insert(j.to_string(), give);
                 remaining -= give;
             }
+        }
+
+        // Safety: if actual sources couldn't cover the gold cost, abort
+        if remaining > 0 {
+            // Undo consumed gold
+            for (key, amount) in &consumed {
+                if let Some(si_str) = key.strip_prefix("pool_") {
+                    if let Ok(si) = si_str.parse::<usize>() {
+                        self.fodder_pools[si] += amount;
+                    }
+                } else if let Ok(j) = key.parse::<usize>() {
+                    self.pages[j] += amount;
+                }
+            }
+            self.pages[i] += cost.self_pages;
+            return None;
         }
 
         self.purple -= cost.purple_pages;
