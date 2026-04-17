@@ -9,9 +9,9 @@
   <a href="https://github.com/yuman07/WenjianSkill/releases"><img src="https://img.shields.io/github/downloads/yuman07/WenjianSkill/total" alt="Downloads"></a>
   <a href="https://github.com/yuman07/WenjianSkill/stargazers"><img src="https://img.shields.io/github/stars/yuman07/WenjianSkill" alt="Stars"></a>
   <br>
-  <img src="https://img.shields.io/badge/macOS-14.0%2B%20ARM-black?logo=apple" alt="macOS 14.0+ ARM">
+  <img src="https://img.shields.io/badge/macOS-15.0%2B%20ARM-black?logo=apple" alt="macOS 15.0+ ARM">
   <img src="https://img.shields.io/badge/Windows-10%2B%20x64-blue?logo=windows" alt="Windows 10+ x64">
-  <img src="https://img.shields.io/badge/Rust-1.94%2B-orange?logo=rust" alt="Rust">
+  <img src="https://img.shields.io/badge/Rust-1.95%2B-orange?logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/TypeScript-6-blue?logo=typescript" alt="TypeScript">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/yuman07/WenjianSkill" alt="License"></a>
 </p>
@@ -47,9 +47,9 @@ WenjianSkill 是手游《问剑长生》的**神通升级规划工具**。玩家
 
 > **注意：** 本应用未进行代码签名，首次运行时操作系统会弹出安全警告，请按照下方说明操作。
 
-### macOS (14.0+, Apple Silicon)
+### macOS (15.0+, Apple Silicon)
 
-1. 下载 `WenjianSkill_macOS14_arm64_1.0.0.dmg`
+1. 下载 `WenjianSkill_macOS15_arm64_1.0.0.dmg`
 2. 打开 DMG 文件，将应用拖入「应用程序」文件夹
 3. 首次打开时，macOS Gatekeeper 会弹出"无法验证开发者"的提示。解决方法（任选其一）：
    - **系统设置**：前往 **系统设置 → 隐私与安全性**，找到被拦截的应用，点击「仍要打开」
@@ -175,7 +175,7 @@ WenjianSkill 采用 Tauri 2 架构，前端使用 React 渲染 UI，后端使用
 | 前端 | React 19 + TypeScript 6 + Tailwind CSS 4 |
 | 前端构建 | Vite 8 |
 | 后端算法 | Rust (Edition 2024) |
-| 开发环境 | Devbox (Node.js 24, Rust 1.94+) |
+| 开发环境 | Devbox (Node.js 24, Rust 1.95+) |
 
 ### 架构
 
