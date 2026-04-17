@@ -223,8 +223,8 @@ pub const COSTS_FANXU_BAIZU: [UpgradeCost; 11] = [
 
 /// Table 4: 合体/大乘/渡劫 三系 (合体/大乘/渡劫 + 剑/火/雷, max 天5 = 13 levels)
 pub const COSTS_HETI_TRIPLE: [UpgradeCost; 13] = [
-    UpgradeCost { self_pages: 40,  gold_pages: 120, purple_pages: 100,  blue_pages: 200 },
-    UpgradeCost { self_pages: 40,  gold_pages: 120, purple_pages: 100,  blue_pages: 200 },
+    UpgradeCost { self_pages: 0,   gold_pages: 120, purple_pages: 100,  blue_pages: 200 },
+    UpgradeCost { self_pages: 0,   gold_pages: 120, purple_pages: 100,  blue_pages: 200 },
     UpgradeCost { self_pages: 40,  gold_pages: 120, purple_pages: 150,  blue_pages: 350 },
     UpgradeCost { self_pages: 80,  gold_pages: 120, purple_pages: 200,  blue_pages: 500 },
     UpgradeCost { self_pages: 80,  gold_pages: 160, purple_pages: 250,  blue_pages: 650 },

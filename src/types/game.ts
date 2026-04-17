@@ -156,8 +156,8 @@ const COSTS_FANXU_BAIZU: UpgradeCost[] = [
  * 索引 0 = 1星→2星, ..., 索引 12 = 天4→天5
  */
 const COSTS_HETI_TRIPLE: UpgradeCost[] = [
-  { selfPages: 40,  goldPages: 120, purplePages: 100,  bluePages: 200 },
-  { selfPages: 40,  goldPages: 120, purplePages: 100,  bluePages: 200 },
+  { selfPages: 0,   goldPages: 120, purplePages: 100,  bluePages: 200 },
+  { selfPages: 0,   goldPages: 120, purplePages: 100,  bluePages: 200 },
   { selfPages: 40,  goldPages: 120, purplePages: 150,  bluePages: 350 },
   { selfPages: 80,  goldPages: 120, purplePages: 200,  bluePages: 500 },
   { selfPages: 80,  goldPages: 160, purplePages: 250,  bluePages: 650 },
