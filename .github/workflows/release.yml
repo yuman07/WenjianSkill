@@ -1,9 +1,12 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g. 1.0.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -27,8 +30,8 @@ jobs:
           args: --target aarch64-apple-darwin
       - name: Rename artifact with version info
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          MIN_OS=$(python3 -c "import json; print(json.load(open('src-tauri/tauri.conf.json'))['bundle']['macOS']['minimumSystemVersion'])")
+          VERSION="${{ inputs.version }}"
+          MIN_OS=$(python3 -c "import json, re; v=json.load(open('src-tauri/tauri.conf.json'))['bundle']['macOS']['minimumSystemVersion']; print(re.sub(r'\.0+$', '', v))")
           APP_NAME=$(python3 -c "import json; print(json.load(open('src-tauri/tauri.conf.json'))['productName'])")
           DMG_FILE=$(ls src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg)
           mv "$DMG_FILE" "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/${APP_NAME}_macOS${MIN_OS}_arm64_${VERSION}.dmg"
@@ -51,17 +54,23 @@ jobs:
       - name: Rename artifact with version info
         shell: python
         run: |
-          import json, shutil
+          import json, re, shutil
           conf = json.load(open("src-tauri/tauri.conf.json"))
           app_name = conf["productName"]
-          version = "${{ github.ref_name }}"[1:]
-          src = "src-tauri/target/release/wenjian-skill.exe"
-          dst = f"src-tauri/target/release/{app_name}_Win10_x64_{version}.exe"
+          version = "${{ inputs.version }}"
+          # Windows minimum is a project-wide policy (Windows 10+); tauri.conf.json
+          # has no matching field, so the constant lives here.
+          win_os = "10"
+          cargo = open("src-tauri/Cargo.toml").read()
+          m = re.search(r'^name\s*=\s*"([^"]+)"', cargo, re.MULTILINE)
+          exe_basename = m.group(1)
+          src = f"src-tauri/target/release/{exe_basename}.exe"
+          dst = f"src-tauri/target/release/{app_name}_Win{win_os}_x64_{version}.exe"
           shutil.move(src, dst)
       - uses: actions/upload-artifact@v7
         with:
           name: windows-exe
-          path: src-tauri/target/release/WenjianSkill_*.exe
+          path: src-tauri/target/release/*.exe
 
   release:
     needs: [build-macos, build-windows]
@@ -74,6 +83,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: WenjianSkill ${{ github.ref_name }}
-          generate_release_notes: true
+          tag_name: v${{ inputs.version }}
+          name: WenjianSkill v${{ inputs.version }}
           files: artifacts/*
