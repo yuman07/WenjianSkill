@@ -126,20 +126,37 @@ fn check_feasibility(input: &PlannerInput, weeks: u32) -> bool {
     }
 
     // Per-skill 金色 check: skill i can't use its OWN surplus as its own 金色.
-    // Recompute i's shop surplus EXCLUDING skill i, to get the true available.
-    // (Naive "total_surplus - own_surplus" overcounts when intra-shop conversions
-    // consume part of the individual surplus.)
-    // NOTE: must NOT skip on self_needed==0 — some realm/class combos (返虚, 合体百族
+    // For other shops: straight shop surplus (already 0-saturated).
+    // For i's own shop: pool + D_others − max(0, R − De_i), where R is same-shop
+    // total deficit, De_i is i's donatable, D_others is sum of others' donatable.
+    // i's own surplus can convert INTO same-shop deficits, so it covers part of
+    // R before pool + D_others need to be reserved.
+    // Must NOT skip on self_needed==0 — some realm/class combos (返虚, 合体百族
     // etc.) have self_pages=0 at low levels but still need gold_pages.
+    let donatable_i: Vec<u32> = (0..n)
+        .map(|i| total_pages[i].saturating_sub(self_needed[i]))
+        .collect();
+    let deficit_i: Vec<u32> = (0..n)
+        .map(|i| self_needed[i].saturating_sub(total_pages[i]))
+        .collect();
     for i in 0..n {
         if input.combat_skills[i].current_level >= input.combat_skills[i].target_level { continue; }
         let s = &input.combat_skills[i];
         let cost = total_cost_between(s.current_level, s.target_level, s.realm, s.skill_class);
         let si = s.shop.index();
 
-        let shop_surplus_without_i = (shop_pages_sum[si] - total_pages[i] + fodder_pool[si])
-            .saturating_sub(shop_self_sum[si] - self_needed[i]);
-        let available_for_i = (total_surplus - shop_surplus[si]) + shop_surplus_without_i;
+        let d_others: u32 = (0..n)
+            .filter(|&j| j != i && input.combat_skills[j].shop == s.shop)
+            .map(|j| donatable_i[j])
+            .sum();
+        let r_own: u32 = (0..n)
+            .filter(|&j| input.combat_skills[j].shop == s.shop)
+            .map(|j| deficit_i[j])
+            .sum();
+        let uncovered = r_own.saturating_sub(donatable_i[i]);
+        let gold_from_own_shop = (fodder_pool[si] + d_others).saturating_sub(uncovered);
+        let gold_from_other_shops = total_surplus - shop_surplus[si];
+        let available_for_i = gold_from_own_shop + gold_from_other_shops;
 
         if available_for_i < cost.gold_pages {
             return false;
@@ -306,51 +323,53 @@ impl SimState {
     }
 
     /// Fodder pool pages in `shop` that are safe to use as 金色 without starving
-    /// same-shop 本体 conversions. `exclude`: the skill being upgraded (can't
-    /// donate to itself, so excluded from intra-shop surplus calculation).
-    fn fodder_available_as_other(&self, shop: Shop, exclude: usize, n: usize) -> u32 {
+    /// same-shop 本体 conversions. `exclude`: the skill being upgraded.
+    ///
+    /// Conservation: pool + all donatable (INCLUDING exclude's — one upgrade step
+    /// does not change exclude's donatable, since pages and remaining self-cost
+    /// decrease by the same amount) must cover all 本体 deficits. Only what's
+    /// left after that reservation is free to leave the shop as 金色.
+    fn fodder_available_as_other(&self, shop: Shop, _exclude: usize, n: usize) -> u32 {
         let si = shop.index();
         let pool = self.fodder_pools[si];
-        // Total 本体 deficit for all skills in this shop
         let deficit: u32 = (0..n)
             .filter(|&j| self.shops[j] == shop && self.levels[j] < self.targets[j])
             .map(|j| self.self_remaining_need(j))
             .sum();
-        // Intra-shop skill surplus that can cover part of the deficit via conversion
+        // ALL same-shop donatable (including exclude) can flow into deficits via conversion
         let skill_surplus: u32 = (0..n)
-            .filter(|&j| j != exclude && self.shops[j] == shop)
+            .filter(|&j| self.shops[j] == shop)
             .map(|j| self.donatable(j))
             .sum();
         let needed_from_pool = deficit.saturating_sub(skill_surplus);
         pool.saturating_sub(needed_from_pool)
     }
 
-    /// Per-shop gold budget: max gold extractable without starving same-shop conversions.
-    /// Uses total self-cost (not deficit) to correctly reserve pages each skill needs for
-    /// its own upgrades, matching the Phase 1 feasibility check formula.
+    /// Per-shop 金色 budget for the skill being upgraded. Models:
+    /// max G = pool + D_others − max(0, R − De_exclude)
+    /// where R is same-shop total deficit, De_exclude is exclude's own donatable,
+    /// and D_others is sum of other same-shop skills' donatable. exclude's surplus
+    /// can cover same-shop deficits via conversion, freeing up pool + others'
+    /// surplus for use as 金色.
     fn shop_gold_budgets(&self, exclude: usize, n: usize) -> [u32; 5] {
         let mut budgets = [0u32; 5];
         for &shop in &Shop::ALL {
             let si = shop.index();
-            let total_pages: u32 = (0..n)
-                .filter(|&j| self.shops[j] == shop)
-                .map(|j| self.pages[j])
-                .sum();
-            let total_self_cost: u32 = (0..n)
+            let deficit: u32 = (0..n)
                 .filter(|&j| self.shops[j] == shop && self.levels[j] < self.targets[j])
-                .map(|j| {
-                    total_cost_between(self.levels[j], self.targets[j], self.realms[j], self.skill_classes[j]).self_pages
-                })
+                .map(|j| self.self_remaining_need(j))
                 .sum();
-            // Shop surplus: total pages + fodder beyond all self-costs
-            let total_surplus = (total_pages + self.fodder_pools[si]).saturating_sub(total_self_cost);
-            // Excluded skill's surplus can't be used as its own gold
+            let others_surplus: u32 = (0..n)
+                .filter(|&j| j != exclude && self.shops[j] == shop)
+                .map(|j| self.donatable(j))
+                .sum();
             let exclude_surplus = if self.shops[exclude] == shop {
                 self.donatable(exclude)
             } else {
                 0
             };
-            budgets[si] = total_surplus.saturating_sub(exclude_surplus);
+            let uncovered_deficit = deficit.saturating_sub(exclude_surplus);
+            budgets[si] = (self.fodder_pools[si] + others_surplus).saturating_sub(uncovered_deficit);
         }
         budgets
     }
@@ -768,4 +787,84 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
         reasons.push("转换次数不足，无法在合理时间内完成本体书页的跨技能调配".to_string());
     }
     reasons
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn default_fodder_map() -> FodderIncomeMap {
+        let zero = FodderIncomeEntry { initial_pages: 0, cycle_weeks: 0, batch_count: 0 };
+        FodderIncomeMap {
+            lun_jian: zero.clone(), zhu_tian: zero.clone(), zong_men: zero.clone(),
+            dao_yun: zero.clone(), bai_zu: zero,
+        }
+    }
+
+    fn make_skill(realm: Realm, class: SkillClass, shop: Shop, cur: SkillLevel, tgt: SkillLevel, pages: u32) -> CombatSkillInput {
+        CombatSkillInput {
+            realm, skill_class: class, shop,
+            current_level: cur, remaining_pages: pages, target_level: tgt,
+            label: "t".to_string(),
+            income_cycle_weeks: 0, income_batch_count: 0,
+        }
+    }
+
+    /// Regression: an upgrading skill's own donatable (surplus) must be counted
+    /// as covering same-shop 本体 deficits via conversion, freeing pool + others'
+    /// surplus for use as 金色. Before the fix, Phase 1's per-skill check and
+    /// shop_gold_budgets / fodder_available_as_other all used a formula that
+    /// over-reserved the pool whenever the upgrading skill had positive surplus.
+    ///
+    /// Scenario: two 返虚·剑·论剑 skills sharing the only populated shop.
+    ///   A: 玄1 → 玄2. 返虚三系 row 3 costs 80 self, 80 gold. A has 200 pages ⇒ donatable 120.
+    ///   B: 1星 → 2星. Row 0 costs 0 self, 80 gold. B has 0 pages, 0 self_cost ⇒ deficit 0.
+    ///   Pool 论剑 = 120. Other shops empty.
+    ///   Total gold need = 160, total available (pool + A donatable) = 240.
+    #[test]
+    fn week0_feasibility_counts_upgrading_skill_surplus_against_shop_deficit() {
+        let a = make_skill(Realm::FanXu, SkillClass::Jian, Shop::LunJian, SkillLevel::Xuan1, SkillLevel::Xuan2, 200);
+        let b = make_skill(Realm::FanXu, SkillClass::Jian, Shop::LunJian, SkillLevel::Star1, SkillLevel::Star2, 0);
+        let mut fodder = default_fodder_map();
+        fodder.lun_jian = FodderIncomeEntry { initial_pages: 120, cycle_weeks: 0, batch_count: 0 };
+        let input = PlannerInput {
+            combat_skills: vec![a, b],
+            purple_pages: 1000, blue_pages: 3000,
+            advanced: AdvancedSettings {
+                conversion_stones: 0, free_conversions_per_week: 3,
+                fodder_income: fodder,
+                weekly_purple_income: 0, weekly_blue_income: 0,
+            },
+        };
+        assert!(check_feasibility(&input, 0),
+            "week-0 must be feasible: pool + A's surplus covers both skills' gold needs");
+    }
+
+    /// End-to-end sanity: a simple all-同商店 party finishes in the expected
+    /// small number of weeks given sufficient pool & income.
+    #[test]
+    fn simple_party_completes_feasibly() {
+        // Four 返虚+剑+论剑 skills from 1星 to 玄1. No fodder, good pool, generic colors.
+        let mk = |tgt| make_skill(Realm::FanXu, SkillClass::Jian, Shop::LunJian, SkillLevel::Star1, tgt, 0);
+        let skills = vec![
+            mk(SkillLevel::Xuan1), mk(SkillLevel::Xuan1),
+            mk(SkillLevel::Xuan1), mk(SkillLevel::Xuan1),
+        ];
+        let mut fodder = default_fodder_map();
+        fodder.lun_jian = FodderIncomeEntry { initial_pages: 2000, cycle_weeks: 1, batch_count: 4 };
+        let input = PlannerInput {
+            combat_skills: skills,
+            purple_pages: 10_000, blue_pages: 20_000,
+            advanced: AdvancedSettings {
+                conversion_stones: 0, free_conversions_per_week: 3,
+                fodder_income: fodder,
+                weekly_purple_income: 0, weekly_blue_income: 0,
+            },
+        };
+        let out = run_planner(&input);
+        assert!(out.feasible);
+        for lv in &out.final_levels {
+            assert!(*lv >= SkillLevel::Xuan1);
+        }
+    }
 }
