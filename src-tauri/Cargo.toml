@@ -5,7 +5,7 @@ description = "问剑长生 - 神通升级规划工具"
 authors = []
 license = "MIT"
 edition = "2024"
-rust-version = "1.94"
+rust-version = "1.95"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
