@@ -55,13 +55,13 @@ jobs:
         shell: python
         run: |
           import json, re, shutil
-          conf = json.load(open("src-tauri/tauri.conf.json"))
+          conf = json.load(open("src-tauri/tauri.conf.json", encoding="utf-8"))
           app_name = conf["productName"]
           version = "${{ inputs.version }}"
           # Windows minimum is a project-wide policy (Windows 10+); tauri.conf.json
           # has no matching field, so the constant lives here.
           win_os = "10"
-          cargo = open("src-tauri/Cargo.toml").read()
+          cargo = open("src-tauri/Cargo.toml", encoding="utf-8").read()
           m = re.search(r'^name\s*=\s*"([^"]+)"', cargo, re.MULTILINE)
           exe_basename = m.group(1)
           src = f"src-tauri/target/release/{exe_basename}.exe"
