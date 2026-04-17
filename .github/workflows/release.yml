@@ -4,30 +4,78 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g. 1.0.0)'
+        description: 'Version number without v prefix (e.g. 1.0.0)'
         required: true
         type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
 jobs:
-  build-macos:
-    runs-on: macos-latest
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.vars.outputs.tag }}
+      prerelease: ${{ steps.vars.outputs.prerelease }}
+    steps:
+      - name: Validate semver input
+        run: |
+          VERSION="${{ inputs.version }}"
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'; then
+            echo "::error::Invalid semver '$VERSION'. Expected e.g. 1.2.3 or 1.2.3-beta.1 (no v prefix)."
+            exit 1
+          fi
+      - name: Derive tag and prerelease flag
+        id: vars
+        run: |
+          VERSION="${{ inputs.version }}"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          if echo "$VERSION" | grep -Eq '-(alpha|beta|rc)'; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  create-release:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ needs.validate.outputs.tag }}" \
+            --draft \
+            --target "$GITHUB_SHA" \
+            --title "WenjianSkill ${{ needs.validate.outputs.tag }}" \
+            ${{ needs.validate.outputs.prerelease == 'true' && '--prerelease' || '' }}
+
+  build-macos:
+    needs: [validate, create-release]
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
-      - uses: dtolnay/rust-toolchain@stable
+          node-version-file: .nvmrc
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
           targets: aarch64-apple-darwin
-      - run: npm install
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: --target aarch64-apple-darwin
+      - run: npm ci
+      - name: Build macOS DMG
+        run: npx tauri build --target aarch64-apple-darwin
       - name: Rename artifact with version info
         run: |
           VERSION="${{ inputs.version }}"
@@ -35,20 +83,27 @@ jobs:
           APP_NAME=$(python3 -c "import json; print(json.load(open('src-tauri/tauri.conf.json'))['productName'])")
           DMG_FILE=$(ls src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg)
           mv "$DMG_FILE" "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/${APP_NAME}_macOS${MIN_OS}_arm64_${VERSION}.dmg"
-      - uses: actions/upload-artifact@v7
-        with:
-          name: macos-dmg
-          path: src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+      - name: Upload DMG to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ needs.validate.outputs.tag }}" \
+            src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg \
+            --clobber
 
   build-windows:
+    needs: [validate, create-release]
     runs-on: windows-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
       - uses: actions/setup-node@v6
         with:
-          node-version: 24
-      - uses: dtolnay/rust-toolchain@stable
-      - run: npm install
+          node-version-file: .nvmrc
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+      - run: npm ci
       - name: Build portable exe
         run: npx tauri build --no-bundle
       - name: Rename artifact with version info
@@ -67,22 +122,23 @@ jobs:
           src = f"src-tauri/target/release/{exe_basename}.exe"
           dst = f"src-tauri/target/release/{app_name}_Win{win_os}_x64_{version}.exe"
           shutil.move(src, dst)
-      - uses: actions/upload-artifact@v7
-        with:
-          name: windows-exe
-          path: src-tauri/target/release/*.exe
+      - name: Upload exe to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path src-tauri/target/release -Filter "*_Win10_x64_*.exe" | Select-Object -First 1
+          gh release upload "${{ needs.validate.outputs.tag }}" $exe.FullName --clobber
 
-  release:
-    needs: [build-macos, build-windows]
+  publish-release:
+    needs: [validate, build-macos, build-windows]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/download-artifact@v7
-        with:
-          path: artifacts
-          merge-multiple: true
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ inputs.version }}
-          name: WenjianSkill v${{ inputs.version }}
-          files: artifacts/*
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "${{ needs.validate.outputs.tag }}" \
+            --draft=false \
+            --repo "$GITHUB_REPOSITORY"
