@@ -238,7 +238,7 @@ pub const COSTS_HETI_TRIPLE: [UpgradeCost; 13] = [
     UpgradeCost { self_pages: 360, gold_pages: 680, purple_pages: 1000, blue_pages: 2400 },
 ];
 
-/// Table 5: 合体/大乘 百族 (合体/大乘 + 百族, max 天3 = 11 levels)
+/// Table 5: 合体 百族 (合体 + 百族, max 天3 = 11 levels)
 pub const COSTS_HETI_BAIZU: [UpgradeCost; 11] = [
     UpgradeCost { self_pages: 0,   gold_pages: 160, purple_pages: 100,  blue_pages: 300 },
     UpgradeCost { self_pages: 0,   gold_pages: 160, purple_pages: 150,  blue_pages: 350 },

@@ -172,7 +172,7 @@ const COSTS_HETI_TRIPLE: UpgradeCost[] = [
 ];
 
 /**
- * Table 5: 合体/大乘 百族 (合体/大乘 + 百族, max 天3 = 11 levels)
+ * Table 5: 合体 百族 (合体 + 百族, max 天3 = 11 levels)
  * 索引 0 = 1星→2星, ..., 索引 10 = 天2→天3
  */
 const COSTS_HETI_BAIZU: UpgradeCost[] = [
