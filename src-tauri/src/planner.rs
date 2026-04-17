@@ -759,7 +759,7 @@ fn generate_reasons(input: &PlannerInput) -> Vec<String> {
     }).sum();
     if total_surplus < total_other_need {
         reasons.push(format!(
-            "金色（狗粮）不足：合计需要 {}，所有来源最多可提供 {}",
+            "仙品（狗粮）不足：合计需要 {}，所有来源最多可提供 {}",
             total_other_need, total_surplus
         ));
     }

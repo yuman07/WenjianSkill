@@ -104,7 +104,7 @@ function WeekCard({ week, skills }: { week: WeekPlan; skills: CombatSkillInput[]
                       </div>
                       <div className="text-xs text-gray-400 mt-0.5 leading-relaxed">
                         消耗：本体 {u.selfPagesUsed} 张
-                        {donorList.length > 0 && <>，金色：{donorList.join("、")}</>}
+                        {donorList.length > 0 && <>，仙品：{donorList.join("、")}</>}
                         {u.purplePagesUsed > 0 && <>，紫色 {u.purplePagesUsed}</>}
                         {u.bluePagesUsed > 0 && <>，蓝色 {u.bluePagesUsed}</>}
                       </div>
