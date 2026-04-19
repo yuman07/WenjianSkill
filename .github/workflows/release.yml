@@ -53,10 +53,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          APP_NAME=$(python3 -c "import json; print(json.load(open('src-tauri/tauri.conf.json'))['productName'])")
           gh release create "${{ needs.validate.outputs.tag }}" \
             --draft \
             --target "$GITHUB_SHA" \
-            --title "WenjianSkill ${{ needs.validate.outputs.tag }}" \
+            --title "${APP_NAME} ${{ needs.validate.outputs.tag }}" \
             ${{ needs.validate.outputs.prerelease == 'true' && '--prerelease' || '' }}
 
   build-macos:
